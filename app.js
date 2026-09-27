@@ -597,4 +597,17 @@
   });
 
   updateStats();
+
+  // Optional deep-links for demos / bookmarks: ?screen=how|play&level=medium
+  const params = new URLSearchParams(location.search);
+  const levelParam = params.get("level");
+  if (levelParam && BANK[levelParam]) {
+    state.level = levelParam;
+    document.querySelectorAll(".level").forEach((b) => {
+      b.classList.toggle("active", b.dataset.level === levelParam);
+    });
+  }
+  const screenParam = params.get("screen");
+  if (screenParam === "how") showScreen("how");
+  if (screenParam === "play") startRound();
 })();

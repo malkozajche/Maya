@@ -2,11 +2,15 @@
 
 A cute, gamified practice page for **order of operations with fractions** (Punkt vor Strich, Klammern, Potenzen) — the skill from Maya’s textbook exercises (e.g. `¾ − ¾ · (⅚ + ½)` and Aufgabe 4 „Berechne“).
 
-## Play
+## Play (public page)
 
-Open [`index.html`](./index.html) locally, or the public GitHub Pages URL after deploy:
+Open the game here (no install):
 
-**https://malkozajche.github.io/Maya/**
+**https://cdn.jsdelivr.net/gh/malkozajche/Maya@cursor/maya-math-adventure-e3d0/index.html**
+
+After merge, you can also enable GitHub Pages (Settings → Pages → GitHub Actions) for:
+
+`https://malkozajche.github.io/Maya/`
 
 ## How it works
 
