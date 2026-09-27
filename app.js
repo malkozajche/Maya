@@ -37,22 +37,57 @@
     return r;
   };
 
-  const eq = (a, b) => a.n === b.n && a.d === b.d;
+  const eq = (a, b) => a.n * b.d === b.n * a.d;
+
+  const VULGAR = {
+    "½": { n: 1, d: 2 },
+    "⅓": { n: 1, d: 3 },
+    "⅔": { n: 2, d: 3 },
+    "¼": { n: 1, d: 4 },
+    "¾": { n: 3, d: 4 },
+    "⅕": { n: 1, d: 5 },
+    "⅖": { n: 2, d: 5 },
+    "⅗": { n: 3, d: 5 },
+    "⅘": { n: 4, d: 5 },
+    "⅙": { n: 1, d: 6 },
+    "⅚": { n: 5, d: 6 },
+    "⅛": { n: 1, d: 8 },
+    "⅜": { n: 3, d: 8 },
+    "⅝": { n: 5, d: 8 },
+    "⅞": { n: 7, d: 8 },
+  };
 
   const parseAnswer = (raw) => {
-    const s = String(raw).trim().replace(/\s+/g, "").replace(",", ".");
+    // Normalize unicode minus / fraction slash / decimal comma first.
+    let s = String(raw)
+      .trim()
+      .replace(/[−–—]/g, "-")
+      .replace(/[⁄∕]/g, "/")
+      .replace(/,/g, ".");
     if (!s) return null;
 
-    // mixed number like 1 1/3 or 1+1/3
-    const mixed = s.match(/^(-?\d+)(?:\+| )?(\d+)\/(\d+)$/);
+    // Lone vulgar fraction, optional leading minus: ¾ or -¼
+    const vulgarOnly = s.match(/^(-?)([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])$/);
+    if (vulgarOnly) {
+      const v = VULGAR[vulgarOnly[2]];
+      return F(vulgarOnly[1] === "-" ? -v.n : v.n, v.d);
+    }
+
+    // Mixed number MUST have a separator (space or +), otherwise
+    // "12/9" was wrongly read as 1 + 2/9.
+    const mixedSpace = s.match(/^(-?\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+    const mixedPlus = s.match(/^(-?\d+)\s*\+\s*(\d+)\s*\/\s*(\d+)$/);
+    const mixed = mixedSpace || mixedPlus;
     if (mixed) {
       const whole = Number(mixed[1]);
       const n = Number(mixed[2]);
       const d = Number(mixed[3]);
       if (!d) return null;
-      const sign = whole < 0 ? -1 : 1;
+      const sign = whole < 0 || Object.is(whole, -0) ? -1 : 1;
       return add(F(whole), F(sign * n, d));
     }
+
+    s = s.replace(/\s+/g, "");
 
     const frac = s.match(/^(-?\d+)\/(-?\d+)$/);
     if (frac) {
@@ -64,7 +99,6 @@
     if (/^-?\d+(\.\d+)?$/.test(s)) {
       const x = Number(s);
       if (!Number.isFinite(x)) return null;
-      // convert decimal with limited places to fraction
       const str = String(x);
       if (!str.includes(".")) return F(x, 1);
       const decimals = str.split(".")[1].length;
@@ -362,6 +396,7 @@
     streak: 0,
     phase: "choose", // choose | answer | doneQ
     hintShown: false,
+    advanceTimer: 0,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -534,12 +569,17 @@
       $("btnNext").hidden = false;
       $("answerPanel").hidden = true;
       $("progressBar").style.width = `${(state.index + 1) / state.queue.length * 100}%`;
+      // Auto-advance so a correct answer always moves the game forward.
+      window.clearTimeout(state.advanceTimer);
+      state.advanceTimer = window.setTimeout(() => {
+        if (state.phase === "doneQ") onNext();
+      }, 900);
       return;
     }
 
     state.streak = 0;
     updateStats();
-    $("feedback").textContent = "Noch nicht. Nutze den Tipp und versuch’s nochmal.";
+    $("feedback").textContent = `Noch nicht (gelesen: ${fmt(got)}). Nutze den Tipp und versuch’s nochmal.`;
     $("feedback").className = "feedback bad";
   }
 
@@ -552,6 +592,7 @@
   }
 
   function onNext() {
+    window.clearTimeout(state.advanceTimer);
     if (state.index >= state.queue.length - 1) {
       finishRound();
       return;
