@@ -135,37 +135,53 @@
 
       <div id="stepChoices" class="choices" hidden></div>
 
-      <section class="scratch" id="scratchPad" aria-label="Schreibzettel">
+      <section class="scratch" id="scratchPad" aria-label="Geführtes Rechnen">
         <div class="scratch-head">
           <div>
-            <p class="scratch-title">Schreibzettel</p>
-            <p class="scratch-sub">Hier darfst du alles aufschreiben — wie im Heft</p>
+            <p class="scratch-title">Schritt für Schritt</p>
+            <p class="scratch-sub">Wir rechnen zusammen — einen Schritt nach dem anderen</p>
           </div>
-          <button type="button" class="btn soft scratch-clear" id="btnClearScratch">Zettel leeren</button>
         </div>
         <p class="scratch-term" id="scratchTerm"></p>
-        <div class="scratch-steps" id="scratchSteps">
-          <label class="scratch-row">
-            <span>Schritt 1</span>
-            <input type="text" class="scratch-line" id="scratch1" autocomplete="off" placeholder="z. B. Klammer: 5/6 + 1/2 = …" />
-          </label>
-          <label class="scratch-row">
-            <span>Schritt 2</span>
-            <input type="text" class="scratch-line" id="scratch2" autocomplete="off" placeholder="z. B. Punkt: … · … = …" />
-          </label>
-          <label class="scratch-row">
-            <span>Schritt 3</span>
-            <input type="text" class="scratch-line" id="scratch3" autocomplete="off" placeholder="z. B. Strich: … − … = …" />
-          </label>
+
+        <div id="guidePanel" class="guide" hidden>
+          <p class="guide-progress">
+            Schritt <span id="guideNum">1</span> von <span id="guideTotal">2</span>
+          </p>
+          <p class="guide-prompt" id="guidePrompt"></p>
+          <p class="guide-ask" id="guideAsk">Was kommt heraus? Schreib den Zwischenschritt und das Ergebnis.</p>
+          <input type="text" class="scratch-line" id="guideWrite" autocomplete="off" placeholder="Hier diesen Schritt aufschreiben…" />
+          <div class="guide-frac-row" id="guideFracRow">
+            <span class="guide-frac-label">Zwischenergebnis</span>
+            <button type="button" class="sign-btn" id="btnGuideSign" aria-pressed="false" title="Vorzeichen">+</button>
+            <div class="frac-input guide-frac">
+              <input id="guideNumInput" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Zähler Zwischenergebnis" placeholder="Zähler" />
+              <span class="frac-bar" aria-hidden="true"></span>
+              <input id="guideDenInput" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Nenner Zwischenergebnis" placeholder="Nenner" />
+            </div>
+            <button type="button" class="btn primary" id="btnCheckGuide">Schritt prüfen</button>
+          </div>
+          <p class="guide-feedback" id="guideFeedback" role="status"></p>
+          <p class="guide-reveal" id="guideReveal" hidden></p>
+          <div class="guide-actions">
+            <button type="button" class="btn soft" id="btnRevealStep">Schritt zeigen</button>
+            <button type="button" class="btn primary" id="btnGuideNext" hidden>Nächster Schritt</button>
+          </div>
         </div>
-        <label class="scratch-free-label" for="scratchFree">Frei rechnen</label>
-        <textarea id="scratchFree" class="scratch-free" rows="4" placeholder="Hier frei kritzeln: erweitern, kürzen, Zwischenschritte…"></textarea>
+
+        <div id="doneSteps" class="done-steps" hidden>
+          <p class="done-steps-title">Deine Schritte</p>
+          <ol id="doneStepsList"></ol>
+        </div>
+
+        <label class="scratch-free-label" for="scratchFree">Frei kritzeln (erweitern, kürzen…)</label>
+        <textarea id="scratchFree" class="scratch-free" rows="3" placeholder="Hier darfst du alles aufschreiben, was du brauchst…"></textarea>
       </section>
 
       <p class="gekuerzt-banner" role="note">Immer als <strong>völlig gekürzten Bruch</strong> angeben!</p>
 
       <div id="answerPanel" class="answer-panel" hidden>
-        <p class="answer-label" id="answerLabel">Dein Ergebnis — völlig gekürzt, wie im Heft</p>
+        <p class="answer-label" id="answerLabel">Endergebnis — völlig gekürzt</p>
         <div class="answer-row">
           <button type="button" class="sign-btn" id="btnSign" aria-pressed="false" title="Vorzeichen umschalten">+</button>
           <div class="frac-input" role="group" aria-labelledby="answerLabel">

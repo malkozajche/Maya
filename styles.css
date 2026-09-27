@@ -675,13 +675,6 @@ h2 {
   font-weight: 700;
 }
 
-.scratch-clear {
-  margin-top: 0;
-  flex-shrink: 0;
-  padding: 0.55rem 0.8rem;
-  font-size: 0.85rem;
-}
-
 .scratch-term {
   margin: 0 0 0.75rem;
   font-family: var(--font-display);
@@ -689,20 +682,35 @@ h2 {
   color: var(--ink);
 }
 
-.scratch-steps {
-  display: grid;
-  gap: 0.45rem;
-  margin-bottom: 0.7rem;
+.guide {
+  margin-bottom: 0.85rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 2px solid rgba(94, 207, 184, 0.35);
 }
 
-.scratch-row {
-  display: grid;
-  grid-template-columns: 4.2rem 1fr;
-  gap: 0.45rem;
-  align-items: center;
+.guide-progress {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
   font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--coral);
+}
+
+.guide-prompt {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.35;
+}
+
+.guide-ask {
+  margin: 0 0 0.55rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .scratch-line,
@@ -719,11 +727,91 @@ h2 {
   padding: 0.55rem 0.65rem;
 }
 
+.scratch-line {
+  margin-bottom: 0.65rem;
+}
+
 .scratch-line:focus,
 .scratch-free:focus {
   outline: none;
   background: #fff;
   border-bottom-color: var(--mint);
+}
+
+.guide-frac-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.guide-frac-label {
+  font-weight: 800;
+  color: var(--muted);
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+.guide-frac {
+  min-width: 96px;
+}
+
+.guide-feedback {
+  min-height: 1.3rem;
+  margin: 0.35rem 0;
+  font-weight: 800;
+}
+
+.guide-feedback.ok {
+  color: var(--leaf);
+}
+
+.guide-feedback.bad {
+  color: #d44a5c;
+}
+
+.guide-feedback.hint {
+  color: #c46b2c;
+}
+
+.guide-reveal {
+  margin: 0.35rem 0 0.55rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: #eafff8;
+  border: 1px solid rgba(58, 168, 137, 0.25);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.done-steps {
+  margin: 0 0 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.done-steps-title {
+  margin: 0 0 0.35rem;
+  font-weight: 800;
+  color: var(--leaf);
+  font-size: 0.9rem;
+}
+
+.done-steps ol {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .scratch-free-label {
@@ -737,7 +825,7 @@ h2 {
 .scratch-free {
   border: 2px solid rgba(126, 200, 232, 0.35);
   border-radius: 14px;
-  min-height: 7rem;
+  min-height: 5.5rem;
   resize: vertical;
   line-height: 1.45;
   background-image: repeating-linear-gradient(
@@ -749,11 +837,6 @@ h2 {
 }
 
 @media (max-width: 520px) {
-  .scratch-row {
-    grid-template-columns: 1fr;
-    gap: 0.2rem;
-  }
-
   .scratch-head {
     flex-direction: column;
   }

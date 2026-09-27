@@ -437,9 +437,11 @@
     index: 0,
     stars: 0,
     streak: 0,
-    phase: "choose", // choose | answer | doneQ
+    phase: "choose", // choose | guide | answer | doneQ
     hintShown: false,
     advanceTimer: 0,
+    guideIndex: 0,
+    guidePassed: false,
     unlocked: progress.unlocked.includes("easy")
       ? progress.unlocked
       : ["easy", ...progress.unlocked],
@@ -613,16 +615,174 @@
       state.streak = 0;
       updateStats();
       // still continue after brief pause so she can learn
-      setTimeout(() => enterAnswerPhase(problem), 900);
+      setTimeout(() => enterGuidePhase(problem), 900);
       return;
     }
 
-    $("feedback").textContent = "Genau! Das ist der erste Schritt.";
+    $("feedback").textContent = "Genau! Jetzt führen wir den Schritt aus.";
     $("feedback").className = "feedback ok";
     state.stars += 1;
     state.streak += 1;
     updateStats();
-    setTimeout(() => enterAnswerPhase(problem), 550);
+    setTimeout(() => enterGuidePhase(problem), 550);
+  }
+
+  function stepPrompt(stepText) {
+    // Turn "Punkt: 1/3 · 1/2 = 1/6" into a question she can solve.
+    const arrow = stepText.split("→")[0];
+    const idx = arrow.lastIndexOf("=");
+    if (idx === -1) return `${stepText} = ?`;
+    return `${arrow.slice(0, idx).trim()} = ?`;
+  }
+
+  function parseStepExpect(stepText) {
+    const gek = stepText.match(/völlig gekürzt:\s*(-?\d+(?:\/\d+)?)/i);
+    if (gek) return parseAnswer(gek[1]);
+    const cleaned = stepText.split("→")[0].replace(/[−–—]/g, "-");
+    const parts = cleaned.split("=");
+    if (parts.length < 2) return null;
+    const last = parts[parts.length - 1].trim();
+    const m = last.match(/-?\d+(?:\/\d+)?/);
+    return m ? parseAnswer(m[0]) : null;
+  }
+
+  function readGuideFraction() {
+    const numRaw = $("guideNumInput").value.trim().replace(/[−–—]/g, "-");
+    const denRaw = $("guideDenInput").value.trim().replace(/[−–—]/g, "-");
+    if (!numRaw) return null;
+    if (!/^-?\d+$/.test(numRaw)) return null;
+    const nAbs = Math.abs(Number(numRaw));
+    let d = 1;
+    if (denRaw !== "") {
+      if (!/^\d+$/.test(denRaw) || Number(denRaw) === 0) return null;
+      d = Number(denRaw);
+    }
+    const negative = $("btnGuideSign").getAttribute("aria-pressed") === "true";
+    const n = negative ? -nAbs : nAbs;
+    return {
+      value: F(n, d),
+      fullyReduced: n === 0 || gcd(Math.abs(n), d) === 1,
+      rawN: n,
+      rawD: d,
+    };
+  }
+
+  function resetGuideInputs() {
+    $("guideWrite").value = "";
+    $("guideNumInput").value = "";
+    $("guideDenInput").value = "";
+    $("btnGuideSign").setAttribute("aria-pressed", "false");
+    $("btnGuideSign").textContent = "+";
+    $("guideFeedback").textContent = "";
+    $("guideFeedback").className = "guide-feedback";
+    $("guideReveal").hidden = true;
+    $("guideReveal").textContent = "";
+    $("btnGuideNext").hidden = true;
+    state.guidePassed = false;
+  }
+
+  function renderGuideStep() {
+    const problem = currentProblem();
+    const steps = problem.steps || [];
+    const i = state.guideIndex;
+    $("guidePanel").hidden = false;
+    $("guideNum").textContent = String(i + 1);
+    $("guideTotal").textContent = String(steps.length);
+    $("guidePrompt").textContent = stepPrompt(steps[i] || "");
+    $("missionText").textContent = `Schritt ${i + 1} von ${steps.length} — schreib auf und rechne das Zwischenergebnis.`;
+    $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
+    resetGuideInputs();
+    $("guideWrite").focus();
+  }
+
+  function enterGuidePhase(problem) {
+    state.phase = "guide";
+    state.guideIndex = 0;
+    $("stepChoices").hidden = true;
+    $("answerPanel").hidden = true;
+    $("btnNext").hidden = true;
+    $("doneSteps").hidden = true;
+    $("doneStepsList").innerHTML = "";
+    $("scratchPad").hidden = false;
+    $("scratchTerm").textContent = `Term: ${problem.display}`;
+    $("scratchFree").value = "";
+    if (!$("feedback").classList.contains("ok")) {
+      $("feedback").textContent = "";
+      $("feedback").className = "feedback";
+    }
+    renderGuideStep();
+  }
+
+  function appendDoneStep(text) {
+    $("doneSteps").hidden = false;
+    const li = document.createElement("li");
+    li.textContent = text;
+    $("doneStepsList").appendChild(li);
+  }
+
+  function onCheckGuide() {
+    if (state.phase !== "guide") return;
+    const problem = currentProblem();
+    const stepText = problem.steps[state.guideIndex];
+    const expect = parseStepExpect(stepText);
+    const got = readGuideFraction();
+
+    if (!got) {
+      $("guideFeedback").textContent = "Trage das Zwischenergebnis als Bruch ein (Zähler / Nenner).";
+      $("guideFeedback").className = "guide-feedback bad";
+      return;
+    }
+
+    if (!expect) {
+      // Can't auto-check — accept and show the worked step.
+      $("guideFeedback").textContent = "Gut — schau dir die Lösung für diesen Schritt an.";
+      $("guideFeedback").className = "guide-feedback hint";
+      revealCurrentStep(true);
+      return;
+    }
+
+    if (eq(got.value, expect)) {
+      if (!got.fullyReduced) {
+        $("guideFeedback").textContent = `Stimmt! Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(expect)}.`;
+        $("guideFeedback").className = "guide-feedback hint";
+      } else {
+        $("guideFeedback").textContent = `Genau, ${fmtPretty(expect)} — weiter so!`;
+        $("guideFeedback").className = "guide-feedback ok";
+      }
+      state.guidePassed = true;
+      $("btnGuideNext").hidden = false;
+      $("guideReveal").hidden = false;
+      $("guideReveal").textContent = stepText;
+      return;
+    }
+
+    $("guideFeedback").textContent = `Noch nicht. Rechne nochmal auf dem Zettel — oder tippe „Schritt zeigen“.`;
+    $("guideFeedback").className = "guide-feedback bad";
+  }
+
+  function revealCurrentStep(autoNextReady) {
+    const problem = currentProblem();
+    const stepText = problem.steps[state.guideIndex];
+    $("guideReveal").hidden = false;
+    $("guideReveal").textContent = stepText;
+    $("guideFeedback").textContent = "Hier ist der Schritt — schreib ihn auf, dann weiter.";
+    $("guideFeedback").className = "guide-feedback hint";
+    state.guidePassed = true;
+    $("btnGuideNext").hidden = false;
+    if (autoNextReady) $("btnGuideNext").focus();
+  }
+
+  function onGuideNext() {
+    if (state.phase !== "guide") return;
+    const problem = currentProblem();
+    const stepText = problem.steps[state.guideIndex];
+    appendDoneStep(stepText);
+    state.guideIndex += 1;
+    if (state.guideIndex >= problem.steps.length) {
+      enterAnswerPhase(problem);
+      return;
+    }
+    renderGuideStep();
   }
 
   function resetFractionInputs() {
@@ -685,32 +845,20 @@
     }
   }
 
-  function clearScratch() {
-    $("scratch1").value = "";
-    $("scratch2").value = "";
-    $("scratch3").value = "";
-    $("scratchFree").value = "";
-  }
-
-  function setupScratch(problem) {
-    $("scratchPad").hidden = false;
-    $("scratchTerm").textContent = `Term: ${problem.display}`;
-  }
-
   function enterAnswerPhase(problem) {
     state.phase = "answer";
-    $("missionText").textContent = "Rechne auf dem Schreibzettel — dann völlig gekürzten Bruch eintragen:";
+    $("missionText").textContent = "Alle Schritte geschafft — jetzt das Endergebnis (völlig gekürzt):";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     $("stepChoices").hidden = true;
+    $("guidePanel").hidden = true;
     $("answerPanel").hidden = false;
-    setupScratch(problem);
+    $("scratchPad").hidden = false;
+    $("scratchTerm").textContent = `Term: ${problem.display}`;
     resetFractionInputs();
-    $("scratch1").focus();
+    $("numInput").focus();
     $("btnNext").hidden = true;
-    if (!$("feedback").classList.contains("ok")) {
-      $("feedback").textContent = "";
-      $("feedback").className = "feedback";
-    }
+    $("feedback").textContent = "Du hast die Schritte — trag nur noch das Endergebnis ein.";
+    $("feedback").className = "feedback ok";
   }
 
   function highlightTerm(display, fragment) {
@@ -740,14 +888,18 @@
     $("qTotal").textContent = String(total);
     $("progressBar").style.width = `${((num - 1) / total) * 100}%`;
 
-    $("missionText").textContent = "Welchen Schritt machst du zuerst? Du darfst alles aufschreiben.";
+    $("missionText").textContent = "Welchen Schritt machst du zuerst? Danach rechnen wir ihn zusammen.";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     $("answerPanel").hidden = true;
+    $("guidePanel").hidden = true;
+    $("doneSteps").hidden = true;
+    $("doneStepsList").innerHTML = "";
+    $("scratchFree").value = "";
+    $("scratchPad").hidden = false;
+    $("scratchTerm").textContent = `Term: ${problem.display}`;
     $("btnNext").hidden = true;
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
-    clearScratch();
-    setupScratch(problem);
 
     buildStepChoices(problem);
   }
@@ -821,6 +973,10 @@
 
   function onHint() {
     const problem = currentProblem();
+    if (state.phase === "guide") {
+      revealCurrentStep(true);
+      return;
+    }
     const tip = problem.steps[state.hintShown ? Math.min(1, problem.steps.length - 1) : 0];
     state.hintShown = true;
     $("feedback").textContent = `Tipp: ${tip}`;
@@ -920,9 +1076,22 @@
   $("btnCheck").addEventListener("click", onCheck);
   $("btnHint").addEventListener("click", onHint);
   $("btnNext").addEventListener("click", onNext);
-  $("btnClearScratch").addEventListener("click", () => {
-    clearScratch();
-    $("scratch1").focus();
+  $("btnCheckGuide").addEventListener("click", onCheckGuide);
+  $("btnRevealStep").addEventListener("click", () => revealCurrentStep(true));
+  $("btnGuideNext").addEventListener("click", onGuideNext);
+  $("btnGuideSign").addEventListener("click", () => {
+    const pressed = $("btnGuideSign").getAttribute("aria-pressed") === "true";
+    $("btnGuideSign").setAttribute("aria-pressed", pressed ? "false" : "true");
+    $("btnGuideSign").textContent = pressed ? "+" : "−";
+  });
+  $("guideNumInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      $("guideDenInput").focus();
+    }
+  });
+  $("guideDenInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") onCheckGuide();
   });
   $("btnSign").addEventListener("click", () => {
     const pressed = $("btnSign").getAttribute("aria-pressed") === "true";
