@@ -404,6 +404,34 @@
   const STORAGE_KEY = "maya-termen-progress-v1";
   const SCRATCH_DIARY_KEY = "maya-scratch-diary-v1";
   const SCRATCH_CURRENT_KEY = "maya-scratch-current-v1";
+  const STICKER_KEY = "maya-stickers-v1";
+  const SOUND_KEY = "maya-sound-on";
+
+  const STICKERS = [
+    { id: "bloom", name: "Blumenball", cls: "bloom", how: "Erste richtige Antwort" },
+    { id: "leafy", name: "Waldblatt", cls: "leafy", how: "Serie von 3" },
+    { id: "gem", name: "Pfadstein", cls: "gem", how: "Level Sanft geschafft" },
+    { id: "comet", name: "Sternenkomet", cls: "comet", how: "Level Sternenflug geschafft" },
+  ];
+
+  const CHEERS = [
+    "Ja! Fuchsi hüpft vor Freude!",
+    "Wow, Maya — das saß!",
+    "Du rockst den Termen-Pfad!",
+    "Super Schritt — weiter so!",
+    "Klasse! Noch ein Stein auf dem Pfad!",
+  ];
+  const NUDGES = [
+    "Kein Stress — schreib auf dem Zettel.",
+    "Atem holen… dann Punkt vor Strich.",
+    "Fuchsi glaubt an dich!",
+    "Tipp nutzen ist total erlaubt.",
+  ];
+  const GUIDES = [
+    "Genau diesen Schritt jetzt — du schaffst das.",
+    "Rechne schön langsam auf dem Zettel.",
+    "Zwischenergebnis eintragen, dann geht’s weiter.",
+  ];
 
   const loadProgress = () => {
     try {
@@ -418,6 +446,20 @@
     } catch {
       return { unlocked: ["easy"], completed: [], totalStars: 0 };
     }
+  };
+
+  const loadStickers = () => {
+    try {
+      const raw = localStorage.getItem(STICKER_KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveStickers = (ids) => {
+    localStorage.setItem(STICKER_KEY, JSON.stringify(ids));
   };
 
   const saveProgress = () => {
@@ -498,6 +540,9 @@
       : ["easy", ...progress.unlocked],
     completed: progress.completed,
     totalStars: progress.totalStars,
+    stickers: loadStickers(),
+    soundOn: localStorage.getItem(SOUND_KEY) !== "0",
+    solvedInRound: 0,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -508,6 +553,7 @@
     play: $("screen-play"),
     done: $("screen-done"),
     parent: $("screen-parent"),
+    stickers: $("screen-stickers"),
   };
 
   function showScreen(name) {
@@ -523,6 +569,125 @@
     $("starCount").textContent = String(state.stars);
     $("streakCount").textContent = String(state.streak);
     $("mayaLevel").textContent = String(mayaLevelFromStars(state.totalStars));
+    const soundBtn = $("btnSound");
+    if (soundBtn) {
+      soundBtn.setAttribute("aria-pressed", state.soundOn ? "true" : "false");
+      soundBtn.textContent = state.soundOn ? "Sound an" : "Sound aus";
+    }
+  }
+
+  function pick(arr) {
+    return arr[(Math.random() * arr.length) | 0];
+  }
+
+  function setFoxMood(mood) {
+    ["homeFox", "playFox"].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.classList.remove("happy", "think", "sad");
+      if (mood) {
+        void el.offsetWidth;
+        el.classList.add(mood);
+      }
+    });
+  }
+
+  function say(text, mood) {
+    const play = $("playSpeech");
+    const home = $("homeSpeech");
+    if (play && screens.play.classList.contains("active")) {
+      play.textContent = text;
+    }
+    if (home) home.textContent = text;
+    if (mood) setFoxMood(mood);
+  }
+
+  function popStar(label) {
+    const el = $("starPop");
+    if (!el) return;
+    el.hidden = false;
+    el.textContent = label || "+Stern";
+    el.classList.remove("star-pop");
+    void el.offsetWidth;
+    el.classList.add("star-pop");
+    window.setTimeout(() => {
+      el.hidden = true;
+    }, 900);
+  }
+
+  let audioCtx = null;
+  function playTone(freq, dur, type = "sine", gain = 0.045) {
+    if (!state.soundOn) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      g.gain.value = gain;
+      osc.connect(g);
+      g.connect(audioCtx.destination);
+      const t = audioCtx.currentTime;
+      g.gain.setValueAtTime(gain, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.start(t);
+      osc.stop(t + dur);
+    } catch {
+      /* ignore audio errors */
+    }
+  }
+
+  function sfxCheer() {
+    playTone(523.25, 0.12, "triangle", 0.04);
+    window.setTimeout(() => playTone(659.25, 0.14, "triangle", 0.04), 80);
+    window.setTimeout(() => playTone(783.99, 0.18, "triangle", 0.035), 160);
+  }
+
+  function sfxNudge() {
+    playTone(392, 0.1, "sine", 0.03);
+    window.setTimeout(() => playTone(349.23, 0.12, "sine", 0.025), 90);
+  }
+
+  function sfxStep() {
+    playTone(440, 0.08, "triangle", 0.03);
+    window.setTimeout(() => playTone(554.37, 0.1, "triangle", 0.03), 70);
+  }
+
+  function unlockSticker(id) {
+    if (state.stickers.includes(id)) return null;
+    state.stickers.push(id);
+    saveStickers(state.stickers);
+    const meta = STICKERS.find((s) => s.id === id);
+    return meta || { id, name: id };
+  }
+
+  function renderTrail(containerId, currentIndex, total, solvedCount) {
+    const box = $(containerId);
+    if (!box) return;
+    box.innerHTML = "";
+    const n = total || 8;
+    for (let i = 0; i < n; i++) {
+      const stone = document.createElement("span");
+      stone.className = "stone";
+      if (i < solvedCount) stone.classList.add("done");
+      if (i === currentIndex) stone.classList.add("current");
+      box.appendChild(stone);
+    }
+  }
+
+  function renderStickerGrid(targetId, highlightId) {
+    const box = $(targetId);
+    if (!box) return;
+    box.innerHTML = "";
+    STICKERS.forEach((s) => {
+      const owned = state.stickers.includes(s.id);
+      const card = document.createElement("div");
+      card.className = `sticker ${owned ? "owned" : "locked-sticker"}`;
+      if (highlightId && s.id === highlightId) card.classList.add("owned");
+      card.innerHTML = `<span class="${s.cls}" aria-hidden="true"></span><span class="sticker-label">${owned ? s.name : "???"}</span>`;
+      card.title = owned ? s.name : s.how;
+      box.appendChild(card);
+    });
   }
 
   function refreshLevelButtons() {
@@ -666,6 +831,8 @@
       $("feedback").className = "feedback bad";
       state.streak = 0;
       updateStats();
+      say(pick(NUDGES), "think");
+      sfxNudge();
       // still continue after brief pause so she can learn
       setTimeout(() => enterGuidePhase(problem), 900);
       return;
@@ -674,8 +841,15 @@
     $("feedback").textContent = "Genau! Jetzt führen wir den Schritt aus.";
     $("feedback").className = "feedback ok";
     state.stars += 1;
+    state.totalStars += 1;
     state.streak += 1;
+    saveProgress();
     updateStats();
+    popStar("+1");
+    say(pick(CHEERS), "happy");
+    sfxCheer();
+    const first = unlockSticker("bloom");
+    if (first) say(`Neuer Sticker: ${first.name}!`, "happy");
     setTimeout(() => enterGuidePhase(problem), 550);
   }
 
@@ -743,6 +917,7 @@
     $("guidePrompt").textContent = stepPrompt(steps[i] || "");
     $("missionText").textContent = `Schritt ${i + 1} von ${steps.length} — nutze deinen Schreibzettel, dann Zwischenergebnis eintragen.`;
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
+    say(pick(GUIDES), "think");
     resetGuideInputs();
     $("guideNumInput").focus();
   }
@@ -797,10 +972,13 @@
       if (!got.fullyReduced) {
         $("guideFeedback").textContent = `Stimmt! Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(expect)}.`;
         $("guideFeedback").className = "guide-feedback hint";
+        say(`Wert stimmt — und völlig gekürzt wäre ${fmtPretty(expect)}.`, "happy");
       } else {
         $("guideFeedback").textContent = `Genau, ${fmtPretty(expect)} — weiter so!`;
         $("guideFeedback").className = "guide-feedback ok";
+        say(pick(CHEERS), "happy");
       }
+      sfxStep();
       state.guidePassed = true;
       $("btnGuideNext").hidden = false;
       $("guideReveal").hidden = false;
@@ -810,6 +988,8 @@
 
     $("guideFeedback").textContent = `Noch nicht. Rechne nochmal auf dem Zettel — oder tippe „Schritt zeigen“.`;
     $("guideFeedback").className = "guide-feedback bad";
+    say(pick(NUDGES), "sad");
+    sfxNudge();
   }
 
   function revealCurrentStep(autoNextReady) {
@@ -939,9 +1119,11 @@
     $("qNum").textContent = String(num);
     $("qTotal").textContent = String(total);
     $("progressBar").style.width = `${((num - 1) / total) * 100}%`;
+    renderTrail("playTrail", state.index, total, state.solvedInRound);
 
     $("missionText").textContent = "Welchen Schritt machst du zuerst? Danach rechnen wir ihn zusammen.";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
+    say(`Stein ${num} auf dem Pfad — was zuerst?`, "think");
     $("answerPanel").hidden = true;
     $("guidePanel").hidden = true;
     $("doneSteps").hidden = true;
@@ -1011,17 +1193,34 @@
         void banner.offsetWidth;
         banner.classList.add("pulse");
       }
+      say(`Geschafft! Nächstes Mal noch kürzen zu ${fmtPretty(got.value)}.`, "happy");
     } else {
       $("feedback").textContent = `Stimmt! ${fmtPretty(problem.answer)} — völlig gekürzt, stark!`;
       $("feedback").className = "feedback ok";
+      say(pick(CHEERS), "happy");
     }
 
     state.stars += needsKuerzen ? 1 : 2;
     state.totalStars += needsKuerzen ? 1 : 2;
     state.streak += 1;
+    state.solvedInRound += 1;
     saveProgress();
     updateStats();
-    burstConfetti(needsKuerzen ? 45 : 70);
+    popStar(needsKuerzen ? "+1" : "+2");
+    burstConfetti(needsKuerzen ? 45 : 90);
+    sfxCheer();
+    renderTrail("playTrail", Math.min(state.index + 1, state.queue.length - 1), state.queue.length, state.solvedInRound);
+
+    const unlocked = [];
+    if (state.streak >= 3) {
+      const s = unlockSticker("leafy");
+      if (s) unlocked.push(s.name);
+    }
+    if (unlocked.length) {
+      say(`Neuer Sticker: ${unlocked.join(", ")}!`, "happy");
+      burstConfetti(60);
+    }
+
     state.phase = "doneQ";
     $("btnNext").hidden = false;
     $("answerPanel").hidden = true;
@@ -1060,6 +1259,8 @@
       $("feedback").textContent = `Noch nicht (du hast ${fmtRaw(got.rawN, got.rawD)}). Merke: völlig gekürzt! Nutze den Tipp.`;
     }
     $("feedback").className = "feedback bad";
+    say(pick(NUDGES), "sad");
+    sfxNudge();
   }
 
   function onHint() {
@@ -1096,14 +1297,37 @@
       state.unlocked.push(meta.next);
       unlockedNew = meta.next;
     }
+
+    const newStickers = [];
+    if (state.level === "easy") {
+      const s = unlockSticker("gem");
+      if (s) newStickers.push(s.name);
+    }
+    if (state.level === "hard") {
+      const s = unlockSticker("comet");
+      if (s) newStickers.push(s.name);
+    }
+
     saveProgress();
     refreshLevelButtons();
+    renderTrail("homeTrail", 7, 8, 8);
 
     showScreen("done");
-    burstConfetti(140);
+    burstConfetti(160);
+    sfxCheer();
+    say("Pfad geschafft! Fuchsi ist so stolz auf dich!", "happy");
     $("levelClearedLabel").textContent = `Level ${meta.num} · ${meta.label}`;
     $("finalStars").textContent = "★".repeat(Math.min(5, Math.max(1, Math.round(state.stars / 4))));
-    $("doneMessage").textContent = `Du hast ${state.stars} Sterne gesammelt — und immer völlig gekürzt. Super, Maya!`;
+    $("doneMessage").textContent = `Du hast ${state.stars} Sterne gesammelt und ${state.solvedInRound} Steine auf dem Pfad erobert. Super, Maya!`;
+
+    const stickerMsg = $("stickerUnlock");
+    if (newStickers.length) {
+      stickerMsg.hidden = false;
+      stickerMsg.textContent = `Neuer Sticker: ${newStickers.join(", ")}!`;
+    } else {
+      stickerMsg.hidden = true;
+    }
+    renderStickerGrid("doneStickers", newStickers[0] && STICKERS.find((s) => s.name === newStickers[0])?.id);
 
     const unlockEl = $("unlockMessage");
     const nextBtn = $("btnNextLevel");
@@ -1134,8 +1358,11 @@
     state.index = 0;
     state.stars = 0;
     state.streak = 0;
+    state.solvedInRound = 0;
     updateStats();
     showScreen("play");
+    say("Los geht’s — Fuchsi läuft mit dir den Pfad entlang!", "happy");
+    sfxStep();
     renderQuestion();
   }
 
@@ -1152,6 +1379,17 @@
   $("btnStartFromHow").addEventListener("click", startRound);
   $("btnHow").addEventListener("click", () => showScreen("how"));
   $("btnBackHow").addEventListener("click", () => showScreen("home"));
+  $("btnStickers").addEventListener("click", () => {
+    renderStickerGrid("stickerGrid");
+    showScreen("stickers");
+  });
+  $("btnBackStickers").addEventListener("click", () => showScreen("home"));
+  $("btnSound").addEventListener("click", () => {
+    state.soundOn = !state.soundOn;
+    localStorage.setItem(SOUND_KEY, state.soundOn ? "1" : "0");
+    updateStats();
+    if (state.soundOn) sfxStep();
+  });
   $("btnParent").addEventListener("click", () => {
     persistCurrentScratch();
     snapshotScratch("eltern-ansicht");
@@ -1238,6 +1476,9 @@
   updateStats();
   refreshLevelButtons();
   restoreCurrentScratch();
+  renderTrail("homeTrail", 0, 8, state.completed.length ? Math.min(8, state.completed.length * 2) : 0);
+  renderStickerGrid("stickerGrid");
+  say("Komm mit, Maya — wir erobern den Termen-Pfad!", null);
 
   // Optional deep-links for demos / bookmarks: ?screen=how|play&level=medium
   const params = new URLSearchParams(location.search);
