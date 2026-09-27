@@ -4,13 +4,7 @@ A cute, gamified practice page for **order of operations with fractions** (Punkt
 
 ## Play (public page)
 
-Open the game here (no install):
-
-**https://cdn.jsdelivr.net/gh/malkozajche/Maya@cursor/maya-math-adventure-e3d0/index.html**
-
-After merge, you can also enable GitHub Pages (Settings → Pages → GitHub Actions) for:
-
-`https://malkozajche.github.io/Maya/`
+**https://malkozajche.github.io/Maya/**
 
 ## How it works
 
