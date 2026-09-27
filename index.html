@@ -16,6 +16,7 @@
     <span class="blob blob-b"></span>
     <span class="blob blob-c"></span>
   </div>
+  <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
 
   <header class="top">
     <div class="brand">
@@ -26,6 +27,10 @@
       </div>
     </div>
     <div class="stats" aria-live="polite">
+      <div class="stat">
+        <span class="stat-label">Level</span>
+        <strong id="mayaLevel">1</strong>
+      </div>
       <div class="stat">
         <span class="stat-label">Sterne</span>
         <strong id="starCount">0</strong>
@@ -56,8 +61,10 @@
         <h1>Hallo Maya!</h1>
         <p class="lede">
           Berechne Terme wie in der Schule – mit Klammern, Brüchen und
-          <em>Punkt vor Strich</em>. Sammele Sterne und werde Term-Heldin.
+          <em>Punkt vor Strich</em>. Ergebnis immer als
+          <em>völlig gekürzten Bruch</em> angeben.
         </p>
+        <p class="gekuerzt-pill" role="note">Merke: immer völlig gekürzt!</p>
         <div class="cta-row">
           <button type="button" class="btn primary" id="btnStart">Los geht’s</button>
           <button type="button" class="btn ghost" id="btnHow">So geht’s</button>
@@ -65,19 +72,26 @@
       </div>
 
       <section class="levels" aria-label="Schwierigkeitsstufen">
-        <h2>Wähle dein Level</h2>
+        <h2>Deine Level</h2>
+        <p class="levels-sub">Schließe ein Level ab, um das nächste freizuschalten.</p>
         <div class="level-grid" role="group">
-          <button type="button" class="level active" data-level="easy">
+          <button type="button" class="level active" data-level="easy" data-level-num="1">
+            <span class="level-badge">Level 1</span>
             <span class="level-title">Sanft</span>
             <span class="level-desc">Punkt vor Strich mit Brüchen</span>
+            <span class="level-lock" hidden>Geschafft</span>
           </button>
-          <button type="button" class="level" data-level="medium">
+          <button type="button" class="level locked" data-level="medium" data-level-num="2" disabled>
+            <span class="level-badge">Level 2</span>
             <span class="level-title">Mutig</span>
             <span class="level-desc">Klammern + gemischte Brüche</span>
+            <span class="level-lock">Noch gesperrt</span>
           </button>
-          <button type="button" class="level" data-level="hard">
+          <button type="button" class="level locked" data-level="hard" data-level-num="3" disabled>
+            <span class="level-badge">Level 3</span>
             <span class="level-title">Sternenflug</span>
             <span class="level-desc">Wie Aufgabe 4 &amp; 7 im Buch</span>
+            <span class="level-lock">Noch gesperrt</span>
           </button>
         </div>
       </section>
@@ -91,7 +105,9 @@
         <li>dann <strong>Potenzen</strong></li>
         <li>dann <strong>Punktrechnung</strong> (· und :)</li>
         <li>zuletzt <strong>Strichrechnung</strong> (+ und −)</li>
+        <li>Ergebnis immer als <strong>völlig gekürzten Bruch</strong> angeben</li>
       </ol>
+      <p class="gekuerzt-pill" role="note">Merke: immer völlig gekürzt!</p>
       <div class="example">
         <p class="example-label">Beispiel aus dem Buch</p>
         <p class="example-term" id="demoTerm">¾ − ¾ · (⅚ + ½)</p>
@@ -118,8 +134,10 @@
 
       <div id="stepChoices" class="choices" hidden></div>
 
+      <p class="gekuerzt-banner" role="note">Immer als <strong>völlig gekürzten Bruch</strong> angeben!</p>
+
       <div id="answerPanel" class="answer-panel" hidden>
-        <p class="answer-label" id="answerLabel">Dein Ergebnis — wie im Heft schreiben</p>
+        <p class="answer-label" id="answerLabel">Dein Ergebnis — völlig gekürzt, wie im Heft</p>
         <div class="answer-row">
           <button type="button" class="sign-btn" id="btnSign" aria-pressed="false" title="Vorzeichen umschalten">+</button>
           <div class="frac-input" role="group" aria-labelledby="answerLabel">
@@ -129,7 +147,7 @@
           </div>
           <button type="button" class="btn primary" id="btnCheck">Prüfen</button>
         </div>
-        <p class="answer-hint">Oben Zähler, unten Nenner. Bei einer ganzen Zahl Nenner leer lassen.</p>
+        <p class="answer-hint">Oben Zähler, unten Nenner · ganz kürzen · bei ganzen Zahlen Nenner leer lassen</p>
         <button type="button" class="btn soft" id="btnHint">Tipp</button>
       </div>
 
@@ -139,10 +157,13 @@
 
     <section id="screen-done" class="screen">
       <div class="done-burst" aria-hidden="true"></div>
+      <p class="level-cleared" id="levelClearedLabel">Level geschafft</p>
       <h2>Geschafft, Maya!</h2>
       <p class="lede" id="doneMessage">Du hast alle Sterne eingesammelt.</p>
+      <p class="unlock-msg" id="unlockMessage" hidden></p>
       <p class="big-stars" id="finalStars">★★★★</p>
       <div class="cta-row">
+        <button type="button" class="btn primary" id="btnNextLevel" hidden>Nächstes Level</button>
         <button type="button" class="btn primary" id="btnAgain">Noch eine Runde</button>
         <button type="button" class="btn ghost" id="btnDoneHome">Zum Start</button>
       </div>

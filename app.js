@@ -388,6 +388,43 @@
     strich: "Zuerst Strichrechnung (+ oder −)",
   };
 
+  const LEVEL_ORDER = ["easy", "medium", "hard"];
+  const LEVEL_META = {
+    easy: { next: "medium", label: "Sanft", num: 1 },
+    medium: { next: "hard", label: "Mutig", num: 2 },
+    hard: { next: null, label: "Sternenflug", num: 3 },
+  };
+
+  const STORAGE_KEY = "maya-termen-progress-v1";
+
+  const loadProgress = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { unlocked: ["easy"], completed: [], totalStars: 0 };
+      const data = JSON.parse(raw);
+      return {
+        unlocked: Array.isArray(data.unlocked) && data.unlocked.length ? data.unlocked : ["easy"],
+        completed: Array.isArray(data.completed) ? data.completed : [],
+        totalStars: Number(data.totalStars) || 0,
+      };
+    } catch {
+      return { unlocked: ["easy"], completed: [], totalStars: 0 };
+    }
+  };
+
+  const saveProgress = () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        unlocked: state.unlocked,
+        completed: state.completed,
+        totalStars: state.totalStars,
+      })
+    );
+  };
+
+  const progress = loadProgress();
+
   const state = {
     level: "easy",
     queue: [],
@@ -397,6 +434,11 @@
     phase: "choose", // choose | answer | doneQ
     hintShown: false,
     advanceTimer: 0,
+    unlocked: progress.unlocked.includes("easy")
+      ? progress.unlocked
+      : ["easy", ...progress.unlocked],
+    completed: progress.completed,
+    totalStars: progress.totalStars,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -413,10 +455,99 @@
     screens[name].classList.add("active");
   }
 
+  function mayaLevelFromStars(total) {
+    return 1 + Math.floor(Math.max(0, total) / 12);
+  }
+
   function updateStats() {
     $("starCount").textContent = String(state.stars);
     $("streakCount").textContent = String(state.streak);
+    $("mayaLevel").textContent = String(mayaLevelFromStars(state.totalStars));
   }
+
+  function refreshLevelButtons() {
+    document.querySelectorAll(".level").forEach((btn) => {
+      const id = btn.dataset.level;
+      const unlocked = state.unlocked.includes(id);
+      btn.classList.toggle("locked", !unlocked);
+      btn.disabled = !unlocked;
+      const lock = btn.querySelector(".level-lock");
+      if (lock) {
+        if (!unlocked) {
+          lock.hidden = false;
+          lock.textContent = "Noch gesperrt";
+        } else if (state.completed.includes(id)) {
+          lock.hidden = false;
+          lock.textContent = "Geschafft";
+        } else {
+          lock.hidden = true;
+        }
+      }
+      if (!unlocked && state.level === id) {
+        state.level = "easy";
+      }
+      btn.classList.toggle("active", btn.dataset.level === state.level && unlocked);
+    });
+  }
+
+  // --- Confetti -----------------------------------------------------------
+  const confettiCanvas = $("confetti");
+  const confettiCtx = confettiCanvas.getContext("2d");
+  let confettiBits = [];
+  let confettiRaf = 0;
+
+  function resizeConfetti() {
+    confettiCanvas.width = window.innerWidth * devicePixelRatio;
+    confettiCanvas.height = window.innerHeight * devicePixelRatio;
+    confettiCtx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+
+  function burstConfetti(amount = 90) {
+    resizeConfetti();
+    const colors = ["#ff7a8a", "#ff9b6a", "#5ecfb8", "#7ec8e8", "#f0a53a", "#fff"];
+    for (let i = 0; i < amount; i++) {
+      confettiBits.push({
+        x: Math.random() * window.innerWidth,
+        y: -20 - Math.random() * 80,
+        w: 6 + Math.random() * 7,
+        h: 8 + Math.random() * 10,
+        vx: -3 + Math.random() * 6,
+        vy: 2 + Math.random() * 4,
+        rot: Math.random() * Math.PI,
+        vr: -0.2 + Math.random() * 0.4,
+        color: colors[(Math.random() * colors.length) | 0],
+        life: 90 + ((Math.random() * 40) | 0),
+      });
+    }
+    if (!confettiRaf) confettiRaf = requestAnimationFrame(tickConfetti);
+  }
+
+  function tickConfetti() {
+    confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    confettiBits = confettiBits.filter((p) => p.life > 0);
+    confettiBits.forEach((p) => {
+      p.life -= 1;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.06;
+      p.rot += p.vr;
+      confettiCtx.save();
+      confettiCtx.translate(p.x, p.y);
+      confettiCtx.rotate(p.rot);
+      confettiCtx.globalAlpha = Math.max(0, p.life / 40);
+      confettiCtx.fillStyle = p.color;
+      confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      confettiCtx.restore();
+    });
+    if (confettiBits.length) {
+      confettiRaf = requestAnimationFrame(tickConfetti);
+    } else {
+      confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      confettiRaf = 0;
+    }
+  }
+
+  window.addEventListener("resize", resizeConfetti);
 
   function shuffle(arr) {
     const a = arr.slice();
@@ -512,7 +643,10 @@
     }
 
     const negative = $("btnSign").getAttribute("aria-pressed") === "true";
-    return F(negative ? -nAbs : nAbs, d);
+    const n = negative ? -nAbs : nAbs;
+    const value = F(n, d);
+    const fullyReduced = n === 0 || gcd(Math.abs(n), d) === 1;
+    return { value, fullyReduced, rawN: n, rawD: d };
   }
 
   function enterAnswerPhase(problem) {
@@ -567,12 +701,9 @@
     buildStepChoices(problem);
   }
 
-  function answersMatch(problem, got) {
-    if (!got) return false;
-    if (eq(got, problem.answer)) return true;
-    if (problem.alsoAccept && problem.alsoAccept.some((a) => eq(got, a))) return true;
-    // floating tolerance for equivalent forms already simplified via eq
-    return false;
+  function answersMatch(problem, value) {
+    if (!value) return false;
+    return eq(value, problem.answer);
   }
 
   function onCheck() {
@@ -586,12 +717,21 @@
       return;
     }
 
-    if (answersMatch(problem, got)) {
-      $("feedback").textContent = `Stimmt! ${fmtPretty(problem.answer)} — stark!`;
+    if (answersMatch(problem, got.value) && !got.fullyReduced) {
+      $("feedback").textContent = `Fast! Wert stimmt — aber bitte als völlig gekürzten Bruch angeben (z. B. ${fmtPretty(problem.answer)}).`;
+      $("feedback").className = "feedback hint";
+      return;
+    }
+
+    if (answersMatch(problem, got.value) && got.fullyReduced) {
+      $("feedback").textContent = `Stimmt! ${fmtPretty(problem.answer)} — völlig gekürzt, stark!`;
       $("feedback").className = "feedback ok";
       state.stars += 2;
+      state.totalStars += 2;
       state.streak += 1;
+      saveProgress();
       updateStats();
+      burstConfetti(70);
       state.phase = "doneQ";
       $("btnNext").hidden = false;
       $("answerPanel").hidden = true;
@@ -600,13 +740,13 @@
       window.clearTimeout(state.advanceTimer);
       state.advanceTimer = window.setTimeout(() => {
         if (state.phase === "doneQ") onNext();
-      }, 900);
+      }, 1100);
       return;
     }
 
     state.streak = 0;
     updateStats();
-    $("feedback").textContent = `Noch nicht (gelesen: ${fmt(got)}). Nutze den Tipp und versuch’s nochmal.`;
+    $("feedback").textContent = `Noch nicht (gelesen: ${fmt(got.value)}). Denk an: völlig gekürzt! Nutze den Tipp.`;
     $("feedback").className = "feedback bad";
   }
 
@@ -629,14 +769,54 @@
   }
 
   function finishRound() {
+    const meta = LEVEL_META[state.level];
+    const alreadyDone = state.completed.includes(state.level);
+    if (!alreadyDone) state.completed.push(state.level);
+
+    let unlockedNew = null;
+    if (meta.next && !state.unlocked.includes(meta.next)) {
+      state.unlocked.push(meta.next);
+      unlockedNew = meta.next;
+    }
+    saveProgress();
+    refreshLevelButtons();
+
     showScreen("done");
+    burstConfetti(140);
+    $("levelClearedLabel").textContent = `Level ${meta.num} · ${meta.label}`;
     $("finalStars").textContent = "★".repeat(Math.min(5, Math.max(1, Math.round(state.stars / 4))));
-    $("doneMessage").textContent = `Du hast ${state.stars} Sterne gesammelt. Punkt vor Strich sitzt immer besser!`;
+    $("doneMessage").textContent = `Du hast ${state.stars} Sterne gesammelt — und immer völlig gekürzt. Super, Maya!`;
+
+    const unlockEl = $("unlockMessage");
+    const nextBtn = $("btnNextLevel");
+    if (unlockedNew) {
+      const nextMeta = LEVEL_META[unlockedNew];
+      unlockEl.hidden = false;
+      unlockEl.textContent = `Freigeschaltet: Level ${nextMeta.num} · ${nextMeta.label}`;
+      nextBtn.hidden = false;
+      nextBtn.dataset.nextLevel = unlockedNew;
+    } else if (meta.next && state.unlocked.includes(meta.next)) {
+      unlockEl.hidden = false;
+      unlockEl.textContent = `Weiter zu Level ${LEVEL_META[meta.next].num} · ${LEVEL_META[meta.next].label}?`;
+      nextBtn.hidden = false;
+      nextBtn.dataset.nextLevel = meta.next;
+    } else {
+      unlockEl.hidden = false;
+      unlockEl.textContent = "Alle Level freigeschaltet — du bist Term-Heldin!";
+      nextBtn.hidden = true;
+    }
   }
 
   function startRound() {
+    if (!state.unlocked.includes(state.level)) {
+      state.level = "easy";
+      refreshLevelButtons();
+    }
     state.queue = shuffle(BANK[state.level]).slice(0, 8);
     state.index = 0;
+    state.stars = 0;
+    state.streak = 0;
+    updateStats();
     showScreen("play");
     renderQuestion();
   }
@@ -644,9 +824,9 @@
   // Level selection
   document.querySelectorAll(".level").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".level").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
+      if (btn.disabled || !state.unlocked.includes(btn.dataset.level)) return;
       state.level = btn.dataset.level;
+      refreshLevelButtons();
     });
   });
 
@@ -655,8 +835,19 @@
   $("btnHow").addEventListener("click", () => showScreen("how"));
   $("btnBackHow").addEventListener("click", () => showScreen("home"));
   $("btnHome").addEventListener("click", () => showScreen("home"));
-  $("btnDoneHome").addEventListener("click", () => showScreen("home"));
+  $("btnDoneHome").addEventListener("click", () => {
+    refreshLevelButtons();
+    showScreen("home");
+  });
   $("btnAgain").addEventListener("click", startRound);
+  $("btnNextLevel").addEventListener("click", () => {
+    const next = $("btnNextLevel").dataset.nextLevel;
+    if (next && state.unlocked.includes(next)) {
+      state.level = next;
+      refreshLevelButtons();
+      startRound();
+    }
+  });
   $("btnCheck").addEventListener("click", onCheck);
   $("btnHint").addEventListener("click", onHint);
   $("btnNext").addEventListener("click", onNext);
@@ -678,15 +869,19 @@
   $("denInput").addEventListener("keydown", goNextFieldOrCheck);
 
   updateStats();
+  refreshLevelButtons();
 
   // Optional deep-links for demos / bookmarks: ?screen=how|play&level=medium
   const params = new URLSearchParams(location.search);
   const levelParam = params.get("level");
   if (levelParam && BANK[levelParam]) {
+    if (!state.unlocked.includes(levelParam)) {
+      // Dev/demo unlock so deep links still work for testing.
+      state.unlocked = LEVEL_ORDER.slice();
+      saveProgress();
+    }
     state.level = levelParam;
-    document.querySelectorAll(".level").forEach((b) => {
-      b.classList.toggle("active", b.dataset.level === levelParam);
-    });
+    refreshLevelButtons();
   }
   const screenParam = params.get("screen");
   if (screenParam === "how") showScreen("how");
