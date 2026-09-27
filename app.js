@@ -746,7 +746,7 @@
     const needsKuerzen = !got.fullyReduced;
     if (needsKuerzen) {
       // Accept the value, but nudge her to kürzen next time (e.g. 4/6 → 2/3).
-      $("feedback").textContent = `Stimmt! 💛 Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(got.value)} (völlig gekürzt).`;
+      $("feedback").textContent = `Stimmt! Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(got.value)} (völlig gekürzt).`;
       $("feedback").className = "feedback hint";
       const banner = document.querySelector(".gekuerzt-banner");
       if (banner) {
