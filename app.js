@@ -402,6 +402,8 @@
   };
 
   const STORAGE_KEY = "maya-termen-progress-v1";
+  const SCRATCH_DIARY_KEY = "maya-scratch-diary-v1";
+  const SCRATCH_CURRENT_KEY = "maya-scratch-current-v1";
 
   const loadProgress = () => {
     try {
@@ -427,6 +429,55 @@
         totalStars: state.totalStars,
       })
     );
+  };
+
+  const loadDiary = () => {
+    try {
+      const raw = localStorage.getItem(SCRATCH_DIARY_KEY);
+      if (!raw) return [];
+      const data = JSON.parse(raw);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveDiary = (entries) => {
+    localStorage.setItem(SCRATCH_DIARY_KEY, JSON.stringify(entries.slice(0, 100)));
+  };
+
+  const persistCurrentScratch = () => {
+    localStorage.setItem(SCRATCH_CURRENT_KEY, $("scratchFree").value);
+  };
+
+  const restoreCurrentScratch = () => {
+    const saved = localStorage.getItem(SCRATCH_CURRENT_KEY);
+    if (saved != null) $("scratchFree").value = saved;
+  };
+
+  const snapshotScratch = (reason) => {
+    const text = $("scratchFree").value;
+    if (!text.trim()) return;
+    const problem = state.queue[state.index];
+    const entry = {
+      id: Date.now(),
+      at: new Date().toISOString(),
+      reason,
+      level: state.level,
+      levelLabel: LEVEL_META[state.level]?.label || state.level,
+      problemId: problem?.id || "",
+      term: problem?.display || $("scratchTerm").textContent || "",
+      text,
+    };
+    const diary = loadDiary();
+    const prev = diary[0];
+    if (prev && prev.text === entry.text && prev.term === entry.term) {
+      prev.at = entry.at;
+      prev.reason = reason;
+    } else {
+      diary.unshift(entry);
+    }
+    saveDiary(diary);
   };
 
   const progress = loadProgress();
@@ -456,6 +507,7 @@
     how: $("screen-how"),
     play: $("screen-play"),
     done: $("screen-done"),
+    parent: $("screen-parent"),
   };
 
   function showScreen(name) {
@@ -668,7 +720,7 @@
   }
 
   function resetGuideInputs() {
-    $("guideWrite").value = "";
+    // Never touch the Schreibzettel — only reset the step-check fraction boxes.
     $("guideNumInput").value = "";
     $("guideDenInput").value = "";
     $("btnGuideSign").setAttribute("aria-pressed", "false");
@@ -689,10 +741,10 @@
     $("guideNum").textContent = String(i + 1);
     $("guideTotal").textContent = String(steps.length);
     $("guidePrompt").textContent = stepPrompt(steps[i] || "");
-    $("missionText").textContent = `Schritt ${i + 1} von ${steps.length} — schreib auf und rechne das Zwischenergebnis.`;
+    $("missionText").textContent = `Schritt ${i + 1} von ${steps.length} — nutze deinen Schreibzettel, dann Zwischenergebnis eintragen.`;
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     resetGuideInputs();
-    $("guideWrite").focus();
+    $("guideNumInput").focus();
   }
 
   function enterGuidePhase(problem) {
@@ -705,7 +757,7 @@
     $("doneStepsList").innerHTML = "";
     $("scratchPad").hidden = false;
     $("scratchTerm").textContent = `Term: ${problem.display}`;
-    $("scratchFree").value = "";
+    // Schreibzettel stays exactly as Maya left it.
     if (!$("feedback").classList.contains("ok")) {
       $("feedback").textContent = "";
       $("feedback").className = "feedback";
@@ -894,7 +946,6 @@
     $("guidePanel").hidden = true;
     $("doneSteps").hidden = true;
     $("doneStepsList").innerHTML = "";
-    $("scratchFree").value = "";
     $("scratchPad").hidden = false;
     $("scratchTerm").textContent = `Term: ${problem.display}`;
     $("btnNext").hidden = true;
@@ -902,6 +953,45 @@
     $("feedback").className = "feedback";
 
     buildStepChoices(problem);
+  }
+
+  function renderParentDiary() {
+    const box = $("parentDiary");
+    const diary = loadDiary();
+    const live = $("scratchFree").value.trim();
+    box.innerHTML = "";
+
+    if (live) {
+      const liveCard = document.createElement("article");
+      liveCard.className = "diary-card";
+      liveCard.innerHTML = `<p class="diary-meta">Jetzt auf dem Zettel</p>
+        <p class="diary-term">${escapeHtml($("scratchTerm").textContent || "Schreibzettel")}</p>
+        <p class="diary-body"></p>`;
+      liveCard.querySelector(".diary-body").textContent = live;
+      box.appendChild(liveCard);
+    }
+
+    if (!diary.length && !live) {
+      const empty = document.createElement("p");
+      empty.className = "diary-empty";
+      empty.textContent = "Noch nichts gespeichert — sobald Maya kritzelt, erscheint es hier.";
+      box.appendChild(empty);
+      return;
+    }
+
+    diary.forEach((entry) => {
+      const card = document.createElement("article");
+      card.className = "diary-card";
+      const when = new Date(entry.at);
+      const whenLabel = Number.isNaN(when.getTime())
+        ? entry.at
+        : when.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+      card.innerHTML = `<p class="diary-meta">${escapeHtml(whenLabel)} · Level ${escapeHtml(entry.levelLabel || "")} · ${escapeHtml(entry.reason || "")}</p>
+        <p class="diary-term">${escapeHtml(entry.term || "")}</p>
+        <p class="diary-body"></p>`;
+      card.querySelector(".diary-body").textContent = entry.text || "";
+      box.appendChild(card);
+    });
   }
 
   function answersMatch(problem, value) {
@@ -957,6 +1047,7 @@
     updateKuerzenLive();
 
     if (answersMatch(problem, got.value)) {
+      snapshotScratch("lösung");
       acceptCorrectAnswer(problem, got);
       return;
     }
@@ -985,6 +1076,7 @@
 
   function onNext() {
     window.clearTimeout(state.advanceTimer);
+    snapshotScratch("weiter");
     if (state.index >= state.queue.length - 1) {
       finishRound();
       return;
@@ -994,6 +1086,7 @@
   }
 
   function finishRound() {
+    snapshotScratch("runde");
     const meta = LEVEL_META[state.level];
     const alreadyDone = state.completed.includes(state.level);
     if (!alreadyDone) state.completed.push(state.level);
@@ -1059,10 +1152,37 @@
   $("btnStartFromHow").addEventListener("click", startRound);
   $("btnHow").addEventListener("click", () => showScreen("how"));
   $("btnBackHow").addEventListener("click", () => showScreen("home"));
-  $("btnHome").addEventListener("click", () => showScreen("home"));
+  $("btnParent").addEventListener("click", () => {
+    persistCurrentScratch();
+    snapshotScratch("eltern-ansicht");
+    renderParentDiary();
+    showScreen("parent");
+  });
+  $("btnBackParent").addEventListener("click", () => showScreen("home"));
+  $("btnRefreshDiary").addEventListener("click", () => {
+    persistCurrentScratch();
+    renderParentDiary();
+  });
+  $("btnClearDiary").addEventListener("click", () => {
+    if (window.confirm("Mayas gespeicherte Schreibzettel auf diesem Gerät wirklich löschen?")) {
+      saveDiary([]);
+      renderParentDiary();
+    }
+  });
+  $("btnHome").addEventListener("click", () => {
+    snapshotScratch("menü");
+    showScreen("home");
+  });
   $("btnDoneHome").addEventListener("click", () => {
     refreshLevelButtons();
     showScreen("home");
+  });
+  let scratchTimer = 0;
+  $("scratchFree").addEventListener("input", () => {
+    window.clearTimeout(scratchTimer);
+    scratchTimer = window.setTimeout(() => {
+      persistCurrentScratch();
+    }, 250);
   });
   $("btnAgain").addEventListener("click", startRound);
   $("btnNextLevel").addEventListener("click", () => {
@@ -1117,6 +1237,7 @@
 
   updateStats();
   refreshLevelButtons();
+  restoreCurrentScratch();
 
   // Optional deep-links for demos / bookmarks: ?screen=how|play&level=medium
   const params = new URLSearchParams(location.search);
@@ -1133,4 +1254,8 @@
   const screenParam = params.get("screen");
   if (screenParam === "how") showScreen("how");
   if (screenParam === "play") startRound();
+  if (screenParam === "parent") {
+    renderParentDiary();
+    showScreen("parent");
+  }
 })();
