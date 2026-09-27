@@ -39,39 +39,48 @@
         <span class="stat-label">Serie</span>
         <strong id="streakCount">0</strong>
       </div>
+      <button type="button" class="sound-toggle" id="btnSound" aria-pressed="true" title="Sound an/aus">Sound an</button>
     </div>
   </header>
 
   <main>
     <section id="screen-home" class="screen active">
       <div class="hero">
-        <div class="mascot" aria-hidden="true">
-          <div class="fox">
-            <div class="ear left"></div>
-            <div class="ear right"></div>
-            <div class="face">
-              <div class="eye left"></div>
-              <div class="eye right"></div>
-              <div class="nose"></div>
-              <div class="cheek left"></div>
-              <div class="cheek right"></div>
+        <div class="buddy" id="homeBuddy">
+          <div class="mascot" aria-hidden="true">
+            <div class="fox" id="homeFox">
+              <div class="ear left"></div>
+              <div class="ear right"></div>
+              <div class="face">
+                <div class="eye left"></div>
+                <div class="eye right"></div>
+                <div class="nose"></div>
+                <div class="cheek left"></div>
+                <div class="cheek right"></div>
+              </div>
             </div>
           </div>
+          <p class="speech" id="homeSpeech">Komm mit, Maya — wir erobern den Termen-Pfad!</p>
         </div>
         <h1>Hallo Maya!</h1>
         <p class="lede">
-          Berechne Terme wie in der Schule – mit Klammern, Brüchen und
-          <em>Punkt vor Strich</em>. Du darfst alles auf dem
-          <em>Schreibzettel</em> aufschreiben. Ergebnis immer als
-          <em>völlig gekürzten Bruch</em> angeben.
+          Hilf Fuchsi über den <em>Termen-Pfad</em>: Klammern, Brüche,
+          <em>Punkt vor Strich</em>. Schreib alles auf deinen Zettel.
+          Ergebnis immer als <em>völlig gekürzten Bruch</em>.
         </p>
         <p class="gekuerzt-pill" role="note">Merke: immer völlig gekürzt!</p>
         <div class="cta-row">
-          <button type="button" class="btn primary" id="btnStart">Los geht’s</button>
+          <button type="button" class="btn primary" id="btnStart">Abenteuer starten</button>
           <button type="button" class="btn ghost" id="btnHow">So geht’s</button>
+          <button type="button" class="btn ghost" id="btnStickers">Sticker</button>
           <button type="button" class="btn ghost" id="btnParent">Für Eltern</button>
         </div>
       </div>
+
+      <section class="trail-preview" aria-label="Termen-Pfad">
+        <h2>Dein Pfad heute</h2>
+        <div class="trail" id="homeTrail" aria-hidden="true"></div>
+      </section>
 
       <section class="levels" aria-label="Schwierigkeitsstufen">
         <h2>Deine Level</h2>
@@ -131,8 +140,28 @@
         <span class="progress-text"><span id="qNum">1</span>/<span id="qTotal">8</span></span>
       </div>
 
+      <div class="trail play-trail" id="playTrail" aria-label="Fortschritt auf dem Pfad"></div>
+
+      <div class="buddy play-buddy">
+        <div class="mascot tiny" aria-hidden="true">
+          <div class="fox" id="playFox">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="face">
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+              <div class="nose"></div>
+              <div class="cheek left"></div>
+              <div class="cheek right"></div>
+            </div>
+          </div>
+        </div>
+        <p class="speech" id="playSpeech">Du schaffst das — ein Schritt nach dem anderen!</p>
+      </div>
+
       <p class="mission" id="missionText">Welchen Schritt machst du zuerst?</p>
       <div class="term-board" id="termBoard" aria-live="polite"></div>
+      <div class="star-pop" id="starPop" hidden aria-hidden="true">+Stern</div>
 
       <div id="stepChoices" class="choices" hidden></div>
 
@@ -201,15 +230,24 @@
     <section id="screen-done" class="screen">
       <div class="done-burst" aria-hidden="true"></div>
       <p class="level-cleared" id="levelClearedLabel">Level geschafft</p>
-      <h2>Geschafft, Maya!</h2>
+      <h2>Pfad geschafft, Maya!</h2>
       <p class="lede" id="doneMessage">Du hast alle Sterne eingesammelt.</p>
       <p class="unlock-msg" id="unlockMessage" hidden></p>
+      <p class="sticker-unlock" id="stickerUnlock" hidden></p>
+      <div class="sticker-row" id="doneStickers" aria-hidden="true"></div>
       <p class="big-stars" id="finalStars">★★★★</p>
       <div class="cta-row">
         <button type="button" class="btn primary" id="btnNextLevel" hidden>Nächstes Level</button>
         <button type="button" class="btn primary" id="btnAgain">Noch eine Runde</button>
         <button type="button" class="btn ghost" id="btnDoneHome">Zum Start</button>
       </div>
+    </section>
+
+    <section id="screen-stickers" class="screen">
+      <button type="button" class="back" id="btnBackStickers">← Zurück</button>
+      <h2>Sticker-Sammlung</h2>
+      <p class="lede">Fuchsi sammelt mit dir. Neue Sticker durch Serien und Level!</p>
+      <div class="sticker-grid" id="stickerGrid"></div>
     </section>
 
     <section id="screen-parent" class="screen">
