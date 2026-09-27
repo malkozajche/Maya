@@ -132,9 +132,11 @@
         display: "⁸⁄₉ + ²⁄₉ · 2",
         highlightFirst: "²⁄₉ · 2",
         firstStep: "punkt",
-        steps: ["Zuerst Punktrechnung: 2/9 · 2 = 4/9", "Dann Strich: 8/9 + 4/9 = 12/9 = 4/3"],
+        steps: [
+          "Zuerst Punktrechnung: 2/9 · 2 = 4/9",
+          "Dann Strich: 8/9 + 4/9 = 12/9 → völlig gekürzt: 4/3",
+        ],
         answer: F(4, 3),
-        alsoAccept: [F(12, 9)],
       },
       {
         id: "e2",
@@ -150,9 +152,11 @@
         display: "⁵⁄₆ − ¹⁄₃ · ½",
         highlightFirst: "¹⁄₃ · ½",
         firstStep: "punkt",
-        steps: ["Punkt: 1/3 · 1/2 = 1/6", "Strich: 5/6 − 1/6 = 4/6 = 2/3"],
+        steps: [
+          "Punkt: 1/3 · 1/2 = 1/6",
+          "Strich: 5/6 − 1/6 = 4/6 → völlig gekürzt: 2/3",
+        ],
         answer: F(2, 3),
-        alsoAccept: [F(4, 6)],
       },
       {
         id: "e4",
@@ -183,9 +187,11 @@
         display: "⁷⁄₈ − ¼ · ½",
         highlightFirst: "¼ · ½",
         firstStep: "punkt",
-        steps: ["Punkt: 1/4 · 1/2 = 1/8", "Strich: 7/8 − 1/8 = 6/8 = 3/4"],
+        steps: [
+          "Punkt: 1/4 · 1/2 = 1/8",
+          "Strich: 7/8 − 1/8 = 6/8 → völlig gekürzt: 3/4",
+        ],
         answer: F(3, 4),
-        alsoAccept: [F(6, 8)],
       },
       {
         id: "e8",
@@ -624,6 +630,14 @@
     $("denInput").value = "";
     $("btnSign").setAttribute("aria-pressed", "false");
     $("btnSign").textContent = "+";
+    updateKuerzenLive();
+  }
+
+  function fmtRaw(n, d) {
+    const sign = n < 0 ? "−" : "";
+    const abs = Math.abs(n);
+    if (d === 1) return `${sign}${abs}`;
+    return `${sign}${abs}/${d}`;
   }
 
   function readFractionInput() {
@@ -645,13 +659,41 @@
     const negative = $("btnSign").getAttribute("aria-pressed") === "true";
     const n = negative ? -nAbs : nAbs;
     const value = F(n, d);
+    // Whole numbers (empty denominator → d=1) count as gekürzt.
+    // 4/6 must NOT count as gekürzt — remind to write 2/3.
     const fullyReduced = n === 0 || gcd(Math.abs(n), d) === 1;
     return { value, fullyReduced, rawN: n, rawD: d };
   }
 
+  function updateKuerzenLive() {
+    const live = $("kuerzenLive");
+    const banner = document.querySelector(".gekuerzt-banner");
+    const got = readFractionInput();
+    if (!got || got.rawD === 1) {
+      live.hidden = true;
+      live.textContent = "";
+      live.className = "kuerzen-live";
+      return;
+    }
+    live.hidden = false;
+    if (!got.fullyReduced) {
+      live.className = "kuerzen-live";
+      live.textContent = `${fmtRaw(got.rawN, got.rawD)} ist nicht völlig gekürzt → bitte ${fmtPretty(got.value)} schreiben!`;
+      if (banner) {
+        banner.classList.remove("pulse");
+        // re-trigger animation
+        void banner.offsetWidth;
+        banner.classList.add("pulse");
+      }
+    } else {
+      live.className = "kuerzen-live ok-kuerzen";
+      live.textContent = `${fmtPretty(got.value)} — völlig gekürzt, gut!`;
+    }
+  }
+
   function enterAnswerPhase(problem) {
     state.phase = "answer";
-    $("missionText").textContent = "Jetzt ausrechnen — Bruch wie im Heft eintragen:";
+    $("missionText").textContent = "Jetzt ausrechnen — völlig gekürzten Bruch eintragen:";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     $("stepChoices").hidden = true;
     $("answerPanel").hidden = false;
@@ -717,13 +759,26 @@
       return;
     }
 
-    if (answersMatch(problem, got.value) && !got.fullyReduced) {
-      $("feedback").textContent = `Fast! Wert stimmt — aber bitte als völlig gekürzten Bruch angeben (z. B. ${fmtPretty(problem.answer)}).`;
+    updateKuerzenLive();
+
+    // Always block unsimplified answers first — e.g. 4/6 must become 2/3.
+    if (!got.fullyReduced) {
+      const banner = document.querySelector(".gekuerzt-banner");
+      if (banner) {
+        banner.classList.remove("pulse");
+        void banner.offsetWidth;
+        banner.classList.add("pulse");
+      }
+      if (answersMatch(problem, got.value)) {
+        $("feedback").textContent = `${fmtRaw(got.rawN, got.rawD)} stimmt vom Wert — aber nicht völlig gekürzt! Bitte ${fmtPretty(got.value)} eintragen.`;
+      } else {
+        $("feedback").textContent = `${fmtRaw(got.rawN, got.rawD)} ist nicht völlig gekürzt. Zuerst kürzen (→ ${fmtPretty(got.value)}), dann nochmal prüfen.`;
+      }
       $("feedback").className = "feedback hint";
       return;
     }
 
-    if (answersMatch(problem, got.value) && got.fullyReduced) {
+    if (answersMatch(problem, got.value)) {
       $("feedback").textContent = `Stimmt! ${fmtPretty(problem.answer)} — völlig gekürzt, stark!`;
       $("feedback").className = "feedback ok";
       state.stars += 2;
@@ -746,7 +801,7 @@
 
     state.streak = 0;
     updateStats();
-    $("feedback").textContent = `Noch nicht (gelesen: ${fmt(got.value)}). Denk an: völlig gekürzt! Nutze den Tipp.`;
+    $("feedback").textContent = `Noch nicht (du hast ${fmtRaw(got.rawN, got.rawD)}). Merke: völlig gekürzt! Nutze den Tipp.`;
     $("feedback").className = "feedback bad";
   }
 
@@ -855,6 +910,7 @@
     const pressed = $("btnSign").getAttribute("aria-pressed") === "true";
     $("btnSign").setAttribute("aria-pressed", pressed ? "false" : "true");
     $("btnSign").textContent = pressed ? "+" : "−";
+    updateKuerzenLive();
   });
   const goNextFieldOrCheck = (e) => {
     if (e.key !== "Enter") return;
@@ -867,6 +923,10 @@
   };
   $("numInput").addEventListener("keydown", goNextFieldOrCheck);
   $("denInput").addEventListener("keydown", goNextFieldOrCheck);
+  ["input", "change"].forEach((evt) => {
+    $("numInput").addEventListener(evt, updateKuerzenLive);
+    $("denInput").addEventListener(evt, updateKuerzenLive);
+  });
 
   updateStats();
   refreshLevelButtons();
