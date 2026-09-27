@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maya · Termen-Abenteuer</title>
+  <meta name="description" content="Spielerisch Terme mit Brüchen berechnen – Punkt vor Strich, Klammern und Sterne sammeln." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="sky" aria-hidden="true">
+    <span class="blob blob-a"></span>
+    <span class="blob blob-b"></span>
+    <span class="blob blob-c"></span>
+  </div>
+
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <p class="brand-name">Maya</p>
+        <p class="brand-tag">Termen-Abenteuer</p>
+      </div>
+    </div>
+    <div class="stats" aria-live="polite">
+      <div class="stat">
+        <span class="stat-label">Sterne</span>
+        <strong id="starCount">0</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Serie</span>
+        <strong id="streakCount">0</strong>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="screen-home" class="screen active">
+      <div class="hero">
+        <div class="mascot" aria-hidden="true">
+          <div class="fox">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="face">
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+              <div class="nose"></div>
+              <div class="cheek left"></div>
+              <div class="cheek right"></div>
+            </div>
+          </div>
+        </div>
+        <h1>Hallo Maya!</h1>
+        <p class="lede">
+          Berechne Terme wie in der Schule – mit Klammern, Brüchen und
+          <em>Punkt vor Strich</em>. Sammele Sterne und werde Term-Heldin.
+        </p>
+        <div class="cta-row">
+          <button type="button" class="btn primary" id="btnStart">Los geht’s</button>
+          <button type="button" class="btn ghost" id="btnHow">So geht’s</button>
+        </div>
+      </div>
+
+      <section class="levels" aria-label="Schwierigkeitsstufen">
+        <h2>Wähle dein Level</h2>
+        <div class="level-grid" role="group">
+          <button type="button" class="level active" data-level="easy">
+            <span class="level-title">Sanft</span>
+            <span class="level-desc">Punkt vor Strich mit Brüchen</span>
+          </button>
+          <button type="button" class="level" data-level="medium">
+            <span class="level-title">Mutig</span>
+            <span class="level-desc">Klammern + gemischte Brüche</span>
+          </button>
+          <button type="button" class="level" data-level="hard">
+            <span class="level-title">Sternenflug</span>
+            <span class="level-desc">Wie Aufgabe 4 &amp; 7 im Buch</span>
+          </button>
+        </div>
+      </section>
+    </section>
+
+    <section id="screen-how" class="screen">
+      <button type="button" class="back" id="btnBackHow">← Zurück</button>
+      <h2>Merksatz für Terme</h2>
+      <ol class="rules">
+        <li><strong>Klammern</strong> zuerst</li>
+        <li>dann <strong>Potenzen</strong></li>
+        <li>dann <strong>Punktrechnung</strong> (· und :)</li>
+        <li>zuletzt <strong>Strichrechnung</strong> (+ und −)</li>
+      </ol>
+      <div class="example">
+        <p class="example-label">Beispiel aus dem Buch</p>
+        <p class="example-term" id="demoTerm">¾ − ¾ · (⅚ + ½)</p>
+        <ol class="example-steps">
+          <li>Klammer: ⅚ + ½ = ⅚ + 3⁄6 = <strong>8⁄6 = 4⁄3</strong></li>
+          <li>Punkt: ¾ · 4⁄3 = <strong>1</strong></li>
+          <li>Strich: ¾ − 1 = <strong>−¼</strong></li>
+        </ol>
+      </div>
+      <button type="button" class="btn primary" id="btnStartFromHow">Jetzt üben</button>
+    </section>
+
+    <section id="screen-play" class="screen">
+      <div class="play-top">
+        <button type="button" class="back" id="btnHome">← Menü</button>
+        <div class="progress-wrap">
+          <div class="progress" id="progressBar"></div>
+        </div>
+        <span class="progress-text"><span id="qNum">1</span>/<span id="qTotal">8</span></span>
+      </div>
+
+      <p class="mission" id="missionText">Welchen Schritt machst du zuerst?</p>
+      <div class="term-board" id="termBoard" aria-live="polite"></div>
+
+      <div id="stepChoices" class="choices" hidden></div>
+
+      <div id="answerPanel" class="answer-panel" hidden>
+        <label for="answerInput">Dein Ergebnis (als Bruch, z.&nbsp;B. 4/9 oder -1/4)</label>
+        <div class="answer-row">
+          <input id="answerInput" type="text" inputmode="text" autocomplete="off" placeholder="z. B. 12/9 oder 4/3" />
+          <button type="button" class="btn primary" id="btnCheck">Prüfen</button>
+        </div>
+        <button type="button" class="btn soft" id="btnHint">Tipp</button>
+      </div>
+
+      <p class="feedback" id="feedback" role="status"></p>
+      <button type="button" class="btn primary" id="btnNext" hidden>Weiter</button>
+    </section>
+
+    <section id="screen-done" class="screen">
+      <div class="done-burst" aria-hidden="true"></div>
+      <h2>Geschafft, Maya!</h2>
+      <p class="lede" id="doneMessage">Du hast alle Sterne eingesammelt.</p>
+      <p class="big-stars" id="finalStars">★★★★</p>
+      <div class="cta-row">
+        <button type="button" class="btn primary" id="btnAgain">Noch eine Runde</button>
+        <button type="button" class="btn ghost" id="btnDoneHome">Zum Start</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Übe selbstständig · Tipps jederzeit · Sterne für richtige Reihenfolge</p>
+    <p class="more">
+      Noch mehr Spiele:
+      <a href="https://anton.app/de/lernen/mathematik-6-klasse/thema-07-terme-und-gleichungen/uebungen-02-terme-berechnen/" target="_blank" rel="noopener">ANTON · Terme berechnen</a>
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
