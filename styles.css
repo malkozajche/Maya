@@ -825,15 +825,62 @@ h2 {
 .scratch-free {
   border: 2px solid rgba(126, 200, 232, 0.35);
   border-radius: 14px;
-  min-height: 5.5rem;
+  min-height: 16rem;
+  height: min(52vh, 28rem);
   resize: vertical;
-  line-height: 1.45;
+  line-height: 1.55;
+  font-size: 1.05rem;
   background-image: repeating-linear-gradient(
     transparent,
     transparent 27px,
     rgba(126, 200, 232, 0.22) 28px
   );
   background-attachment: local;
+}
+
+.parent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+}
+
+.parent-diary {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.diary-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(42, 36, 56, 0.08);
+}
+
+.diary-meta {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.diary-term {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.diary-body {
+  margin: 0;
+  white-space: pre-wrap;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.diary-empty {
+  color: var(--muted);
+  font-weight: 700;
 }
 
 @media (max-width: 520px) {
