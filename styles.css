@@ -639,6 +639,126 @@ h2 {
   place-items: center;
 }
 
+.scratch {
+  margin: 0 0 1rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: 22px;
+  background:
+    repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      rgba(126, 200, 232, 0.28) 28px
+    ),
+    linear-gradient(180deg, #fffdf8 0%, #f7fbff 100%);
+  border: 1px solid rgba(42, 36, 56, 0.08);
+  box-shadow: 0 10px 24px rgba(42, 36, 56, 0.06);
+}
+
+.scratch-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.scratch-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.scratch-sub {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.scratch-clear {
+  margin-top: 0;
+  flex-shrink: 0;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.scratch-term {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.scratch-steps {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.scratch-row {
+  display: grid;
+  grid-template-columns: 4.2rem 1fr;
+  gap: 0.45rem;
+  align-items: center;
+  font-weight: 800;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.scratch-line,
+.scratch-free {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid rgba(126, 200, 232, 0.55);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 10px 10px 0 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+  padding: 0.55rem 0.65rem;
+}
+
+.scratch-line:focus,
+.scratch-free:focus {
+  outline: none;
+  background: #fff;
+  border-bottom-color: var(--mint);
+}
+
+.scratch-free-label {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-weight: 800;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.scratch-free {
+  border: 2px solid rgba(126, 200, 232, 0.35);
+  border-radius: 14px;
+  min-height: 7rem;
+  resize: vertical;
+  line-height: 1.45;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 27px,
+    rgba(126, 200, 232, 0.22) 28px
+  );
+  background-attachment: local;
+}
+
+@media (max-width: 520px) {
+  .scratch-row {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .scratch-head {
+    flex-direction: column;
+  }
+}
+
 .term-board .hl {
   background: linear-gradient(180deg, transparent 60%, rgba(94, 207, 184, 0.45) 60%);
   border-radius: 6px;

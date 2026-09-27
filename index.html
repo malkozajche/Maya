@@ -61,7 +61,8 @@
         <h1>Hallo Maya!</h1>
         <p class="lede">
           Berechne Terme wie in der Schule – mit Klammern, Brüchen und
-          <em>Punkt vor Strich</em>. Ergebnis immer als
+          <em>Punkt vor Strich</em>. Du darfst alles auf dem
+          <em>Schreibzettel</em> aufschreiben. Ergebnis immer als
           <em>völlig gekürzten Bruch</em> angeben.
         </p>
         <p class="gekuerzt-pill" role="note">Merke: immer völlig gekürzt!</p>
@@ -133,6 +134,33 @@
       <div class="term-board" id="termBoard" aria-live="polite"></div>
 
       <div id="stepChoices" class="choices" hidden></div>
+
+      <section class="scratch" id="scratchPad" aria-label="Schreibzettel">
+        <div class="scratch-head">
+          <div>
+            <p class="scratch-title">Schreibzettel</p>
+            <p class="scratch-sub">Hier darfst du alles aufschreiben — wie im Heft</p>
+          </div>
+          <button type="button" class="btn soft scratch-clear" id="btnClearScratch">Zettel leeren</button>
+        </div>
+        <p class="scratch-term" id="scratchTerm"></p>
+        <div class="scratch-steps" id="scratchSteps">
+          <label class="scratch-row">
+            <span>Schritt 1</span>
+            <input type="text" class="scratch-line" id="scratch1" autocomplete="off" placeholder="z. B. Klammer: 5/6 + 1/2 = …" />
+          </label>
+          <label class="scratch-row">
+            <span>Schritt 2</span>
+            <input type="text" class="scratch-line" id="scratch2" autocomplete="off" placeholder="z. B. Punkt: … · … = …" />
+          </label>
+          <label class="scratch-row">
+            <span>Schritt 3</span>
+            <input type="text" class="scratch-line" id="scratch3" autocomplete="off" placeholder="z. B. Strich: … − … = …" />
+          </label>
+        </div>
+        <label class="scratch-free-label" for="scratchFree">Frei rechnen</label>
+        <textarea id="scratchFree" class="scratch-free" rows="4" placeholder="Hier frei kritzeln: erweitern, kürzen, Zwischenschritte…"></textarea>
+      </section>
 
       <p class="gekuerzt-banner" role="note">Immer als <strong>völlig gekürzten Bruch</strong> angeben!</p>
 

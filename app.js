@@ -685,14 +685,27 @@
     }
   }
 
+  function clearScratch() {
+    $("scratch1").value = "";
+    $("scratch2").value = "";
+    $("scratch3").value = "";
+    $("scratchFree").value = "";
+  }
+
+  function setupScratch(problem) {
+    $("scratchPad").hidden = false;
+    $("scratchTerm").textContent = `Term: ${problem.display}`;
+  }
+
   function enterAnswerPhase(problem) {
     state.phase = "answer";
-    $("missionText").textContent = "Jetzt ausrechnen — völlig gekürzten Bruch eintragen:";
+    $("missionText").textContent = "Rechne auf dem Schreibzettel — dann völlig gekürzten Bruch eintragen:";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     $("stepChoices").hidden = true;
     $("answerPanel").hidden = false;
+    setupScratch(problem);
     resetFractionInputs();
-    $("numInput").focus();
+    $("scratch1").focus();
     $("btnNext").hidden = true;
     if (!$("feedback").classList.contains("ok")) {
       $("feedback").textContent = "";
@@ -727,12 +740,14 @@
     $("qTotal").textContent = String(total);
     $("progressBar").style.width = `${((num - 1) / total) * 100}%`;
 
-    $("missionText").textContent = "Welchen Schritt machst du zuerst?";
+    $("missionText").textContent = "Welchen Schritt machst du zuerst? Du darfst alles aufschreiben.";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     $("answerPanel").hidden = true;
     $("btnNext").hidden = true;
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
+    clearScratch();
+    setupScratch(problem);
 
     buildStepChoices(problem);
   }
@@ -905,6 +920,10 @@
   $("btnCheck").addEventListener("click", onCheck);
   $("btnHint").addEventListener("click", onHint);
   $("btnNext").addEventListener("click", onNext);
+  $("btnClearScratch").addEventListener("click", () => {
+    clearScratch();
+    $("scratch1").focus();
+  });
   $("btnSign").addEventListener("click", () => {
     const pressed = $("btnSign").getAttribute("aria-pressed") === "true";
     $("btnSign").setAttribute("aria-pressed", pressed ? "false" : "true");
