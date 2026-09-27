@@ -119,11 +119,17 @@
       <div id="stepChoices" class="choices" hidden></div>
 
       <div id="answerPanel" class="answer-panel" hidden>
-        <label for="answerInput">Dein Ergebnis (als Bruch, z.&nbsp;B. 4/9 oder -1/4)</label>
+        <p class="answer-label" id="answerLabel">Dein Ergebnis — wie im Heft schreiben</p>
         <div class="answer-row">
-          <input id="answerInput" type="text" inputmode="text" autocomplete="off" placeholder="z. B. 12/9 oder 4/3" />
+          <button type="button" class="sign-btn" id="btnSign" aria-pressed="false" title="Vorzeichen umschalten">+</button>
+          <div class="frac-input" role="group" aria-labelledby="answerLabel">
+            <input id="numInput" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Zähler" placeholder="Zähler" />
+            <span class="frac-bar" aria-hidden="true"></span>
+            <input id="denInput" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Nenner" placeholder="Nenner" />
+          </div>
           <button type="button" class="btn primary" id="btnCheck">Prüfen</button>
         </div>
+        <p class="answer-hint">Oben Zähler, unten Nenner. Bei einer ganzen Zahl Nenner leer lassen.</p>
         <button type="button" class="btn soft" id="btnHint">Tipp</button>
       </div>
 

@@ -488,14 +488,41 @@
     setTimeout(() => enterAnswerPhase(problem), 550);
   }
 
+  function resetFractionInputs() {
+    $("numInput").value = "";
+    $("denInput").value = "";
+    $("btnSign").setAttribute("aria-pressed", "false");
+    $("btnSign").textContent = "+";
+  }
+
+  function readFractionInput() {
+    const numRaw = $("numInput").value.trim().replace(/[−–—]/g, "-");
+    const denRaw = $("denInput").value.trim().replace(/[−–—]/g, "-");
+    if (!numRaw) return null;
+
+    // Digits only (optional leading minus ignored — sign button owns the sign)
+    if (!/^-?\d+$/.test(numRaw)) return null;
+    const nAbs = Math.abs(Number(numRaw));
+    if (!Number.isFinite(nAbs)) return null;
+
+    let d = 1;
+    if (denRaw !== "") {
+      if (!/^\d+$/.test(denRaw) || Number(denRaw) === 0) return null;
+      d = Number(denRaw);
+    }
+
+    const negative = $("btnSign").getAttribute("aria-pressed") === "true";
+    return F(negative ? -nAbs : nAbs, d);
+  }
+
   function enterAnswerPhase(problem) {
     state.phase = "answer";
-    $("missionText").textContent = "Jetzt ausrechnen – Ergebnis als Bruch eingeben:";
+    $("missionText").textContent = "Jetzt ausrechnen — Bruch wie im Heft eintragen:";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     $("stepChoices").hidden = true;
     $("answerPanel").hidden = false;
-    $("answerInput").value = "";
-    $("answerInput").focus();
+    resetFractionInputs();
+    $("numInput").focus();
     $("btnNext").hidden = true;
     if (!$("feedback").classList.contains("ok")) {
       $("feedback").textContent = "";
@@ -552,9 +579,9 @@
     const problem = currentProblem();
     if (state.phase !== "answer") return;
 
-    const got = parseAnswer($("answerInput").value);
+    const got = readFractionInput();
     if (!got) {
-      $("feedback").textContent = "Bitte als Bruch schreiben, z. B. 4/3 oder -1/4.";
+      $("feedback").textContent = "Oben den Zähler eintragen, unten den Nenner (bei ganzen Zahlen Nenner leer lassen).";
       $("feedback").className = "feedback bad";
       return;
     }
@@ -633,9 +660,22 @@
   $("btnCheck").addEventListener("click", onCheck);
   $("btnHint").addEventListener("click", onHint);
   $("btnNext").addEventListener("click", onNext);
-  $("answerInput").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") onCheck();
+  $("btnSign").addEventListener("click", () => {
+    const pressed = $("btnSign").getAttribute("aria-pressed") === "true";
+    $("btnSign").setAttribute("aria-pressed", pressed ? "false" : "true");
+    $("btnSign").textContent = pressed ? "+" : "−";
   });
+  const goNextFieldOrCheck = (e) => {
+    if (e.key !== "Enter") return;
+    if (e.target.id === "numInput") {
+      e.preventDefault();
+      $("denInput").focus();
+      return;
+    }
+    onCheck();
+  };
+  $("numInput").addEventListener("keydown", goNextFieldOrCheck);
+  $("denInput").addEventListener("keydown", goNextFieldOrCheck);
 
   updateStats();
 
