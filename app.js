@@ -678,16 +678,10 @@
     live.hidden = false;
     if (!got.fullyReduced) {
       live.className = "kuerzen-live";
-      live.textContent = `${fmtRaw(got.rawN, got.rawD)} ist nicht völlig gekürzt → bitte ${fmtPretty(got.value)} schreiben!`;
-      if (banner) {
-        banner.classList.remove("pulse");
-        // re-trigger animation
-        void banner.offsetWidth;
-        banner.classList.add("pulse");
-      }
+      live.textContent = `Tipp: ${fmtRaw(got.rawN, got.rawD)} lässt sich noch kürzen → ${fmtPretty(got.value)}`;
     } else {
       live.className = "kuerzen-live ok-kuerzen";
-      live.textContent = `${fmtPretty(got.value)} — völlig gekürzt, gut!`;
+      live.textContent = `${fmtPretty(got.value)} — völlig gekürzt, super!`;
     }
   }
 
@@ -748,6 +742,40 @@
     return eq(value, problem.answer);
   }
 
+  function acceptCorrectAnswer(problem, got) {
+    const needsKuerzen = !got.fullyReduced;
+    if (needsKuerzen) {
+      // Accept the value, but nudge her to kürzen next time (e.g. 4/6 → 2/3).
+      $("feedback").textContent = `Stimmt! 💛 Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(got.value)} (völlig gekürzt).`;
+      $("feedback").className = "feedback hint";
+      const banner = document.querySelector(".gekuerzt-banner");
+      if (banner) {
+        banner.classList.remove("pulse");
+        void banner.offsetWidth;
+        banner.classList.add("pulse");
+      }
+    } else {
+      $("feedback").textContent = `Stimmt! ${fmtPretty(problem.answer)} — völlig gekürzt, stark!`;
+      $("feedback").className = "feedback ok";
+    }
+
+    state.stars += needsKuerzen ? 1 : 2;
+    state.totalStars += needsKuerzen ? 1 : 2;
+    state.streak += 1;
+    saveProgress();
+    updateStats();
+    burstConfetti(needsKuerzen ? 45 : 70);
+    state.phase = "doneQ";
+    $("btnNext").hidden = false;
+    $("answerPanel").hidden = true;
+    $("progressBar").style.width = `${((state.index + 1) / state.queue.length) * 100}%`;
+    // Slightly longer pause when nudging so she can read the kürzen tip.
+    window.clearTimeout(state.advanceTimer);
+    state.advanceTimer = window.setTimeout(() => {
+      if (state.phase === "doneQ") onNext();
+    }, needsKuerzen ? 2200 : 1100);
+  }
+
   function onCheck() {
     const problem = currentProblem();
     if (state.phase !== "answer") return;
@@ -761,47 +789,18 @@
 
     updateKuerzenLive();
 
-    // Always block unsimplified answers first — e.g. 4/6 must become 2/3.
-    if (!got.fullyReduced) {
-      const banner = document.querySelector(".gekuerzt-banner");
-      if (banner) {
-        banner.classList.remove("pulse");
-        void banner.offsetWidth;
-        banner.classList.add("pulse");
-      }
-      if (answersMatch(problem, got.value)) {
-        $("feedback").textContent = `${fmtRaw(got.rawN, got.rawD)} stimmt vom Wert — aber nicht völlig gekürzt! Bitte ${fmtPretty(got.value)} eintragen.`;
-      } else {
-        $("feedback").textContent = `${fmtRaw(got.rawN, got.rawD)} ist nicht völlig gekürzt. Zuerst kürzen (→ ${fmtPretty(got.value)}), dann nochmal prüfen.`;
-      }
-      $("feedback").className = "feedback hint";
-      return;
-    }
-
     if (answersMatch(problem, got.value)) {
-      $("feedback").textContent = `Stimmt! ${fmtPretty(problem.answer)} — völlig gekürzt, stark!`;
-      $("feedback").className = "feedback ok";
-      state.stars += 2;
-      state.totalStars += 2;
-      state.streak += 1;
-      saveProgress();
-      updateStats();
-      burstConfetti(70);
-      state.phase = "doneQ";
-      $("btnNext").hidden = false;
-      $("answerPanel").hidden = true;
-      $("progressBar").style.width = `${(state.index + 1) / state.queue.length * 100}%`;
-      // Auto-advance so a correct answer always moves the game forward.
-      window.clearTimeout(state.advanceTimer);
-      state.advanceTimer = window.setTimeout(() => {
-        if (state.phase === "doneQ") onNext();
-      }, 1100);
+      acceptCorrectAnswer(problem, got);
       return;
     }
 
     state.streak = 0;
     updateStats();
-    $("feedback").textContent = `Noch nicht (du hast ${fmtRaw(got.rawN, got.rawD)}). Merke: völlig gekürzt! Nutze den Tipp.`;
+    if (!got.fullyReduced) {
+      $("feedback").textContent = `Noch nicht (du hast ${fmtRaw(got.rawN, got.rawD)}). Tipp: erst kürzen → ${fmtPretty(got.value)}, dann nochmal denken.`;
+    } else {
+      $("feedback").textContent = `Noch nicht (du hast ${fmtRaw(got.rawN, got.rawD)}). Merke: völlig gekürzt! Nutze den Tipp.`;
+    }
     $("feedback").className = "feedback bad";
   }
 
