@@ -586,6 +586,46 @@ h2 {
   border: 1px solid rgba(58, 168, 137, 0.2);
 }
 
+.kuerzen-panel {
+  margin: 0 0 1rem;
+  padding: 1rem 1.05rem;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #fff7ef, #fff);
+  border: 2px solid rgba(255, 155, 106, 0.45);
+  box-shadow: 0 12px 28px rgba(255, 155, 106, 0.12);
+  animation: rise 0.35s ease;
+}
+
+.kuerzen-title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: #c46b2c;
+}
+
+.kuerzen-prompt {
+  margin: 0 0 0.75rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.kuerzen-equation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem 0.7rem;
+  margin-bottom: 0.75rem;
+}
+
+.kuerzen-from {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 12px;
+  background: #fff0e6;
+}
+
 .gekuerzt-banner strong {
   color: var(--leaf);
 }
