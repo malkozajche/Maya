@@ -84,7 +84,7 @@
 
       <section class="levels" aria-label="Schwierigkeitsstufen">
         <h2>Deine Level</h2>
-        <p class="levels-sub">Schließe ein Level ab, um das nächste freizuschalten.</p>
+        <p class="levels-sub">Tippe ein Level — das Abenteuer startet sofort.</p>
         <div class="level-grid" role="group">
           <button type="button" class="level active" data-level="easy" data-level-num="1">
             <span class="level-badge">Level 1</span>
@@ -211,7 +211,7 @@
       <p class="gekuerzt-banner" role="note">Immer als <strong>völlig gekürzten Bruch</strong> angeben!</p>
 
       <div id="answerPanel" class="answer-panel" hidden>
-        <p class="answer-label" id="answerLabel">Endergebnis — völlig gekürzt</p>
+        <p class="answer-label" id="answerLabel">Endergebnis</p>
         <div class="answer-row">
           <button type="button" class="sign-btn" id="btnSign" aria-pressed="false" title="Vorzeichen umschalten">+</button>
           <div class="frac-input" role="group" aria-labelledby="answerLabel">
@@ -224,6 +224,26 @@
         <p class="answer-hint">Oben Zähler, unten Nenner · bei ganzen Zahlen Nenner leer lassen</p>
         <p class="kuerzen-live" id="kuerzenLive" hidden role="status"></p>
         <button type="button" class="btn soft" id="btnHint">Tipp</button>
+      </div>
+
+      <div id="kuerzenPanel" class="kuerzen-panel" hidden>
+        <p class="kuerzen-title">Noch kürzen!</p>
+        <p class="kuerzen-prompt" id="kuerzenPrompt">12/9 ist noch nicht völlig gekürzt.</p>
+        <div class="kuerzen-equation">
+          <span class="kuerzen-from" id="kuerzenFrom">12/9</span>
+          <span class="fill-eq">→</span>
+          <button type="button" class="sign-btn" id="btnKuerzenSign" aria-pressed="false" title="Vorzeichen">+</button>
+          <div class="frac-input fill-blank">
+            <input id="kuerzenNum" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Zähler gekürzt" placeholder="?" />
+            <span class="frac-bar" aria-hidden="true"></span>
+            <input id="kuerzenDen" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Nenner gekürzt" placeholder="?" />
+          </div>
+        </div>
+        <div class="guide-actions">
+          <button type="button" class="btn primary" id="btnCheckKuerzen">Gekürzt prüfen</button>
+          <button type="button" class="btn soft" id="btnRevealKuerzen">Hilfe kürzen</button>
+        </div>
+        <p class="guide-feedback" id="kuerzenFeedback" role="status"></p>
       </div>
 
       <p class="feedback" id="feedback" role="status"></p>

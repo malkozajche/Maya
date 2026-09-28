@@ -536,6 +536,7 @@
     guideIndex: 0,
     guidePassed: false,
     guideFilled: [],
+    kuerzen: null, // { rawN, rawD, target, context: 'guide'|'answer' }
     unlocked: progress.unlocked.includes("easy")
       ? progress.unlocked
       : ["easy", ...progress.unlocked],
@@ -967,6 +968,7 @@
     state.phase = "guide";
     state.guideIndex = 0;
     state.guideFilled = [];
+    hideKuerzenPanel();
     $("stepChoices").hidden = true;
     $("answerPanel").hidden = true;
     $("btnNext").hidden = true;
@@ -1021,15 +1023,14 @@
 
     if (eq(got.value, expect)) {
       if (!got.fullyReduced) {
-        $("guideFeedback").textContent = `Passt! Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(expect)}. Weiter geht’s.`;
+        $("guideFeedback").textContent = `Wert stimmt — bitte noch kürzen!`;
         $("guideFeedback").className = "guide-feedback hint";
-        say(`Eingetragen! Gekürzt: ${fmtPretty(expect)}.`, "happy");
-        fillGuideBoxes(expect);
-      } else {
-        $("guideFeedback").textContent = `Genau: ${parts.expr} = ${fmtPretty(expect)}`;
-        $("guideFeedback").className = "guide-feedback ok";
-        say(pick(CHEERS), "happy");
+        openKuerzenPanel(got.rawN, got.rawD, expect, "guide");
+        return;
       }
+      $("guideFeedback").textContent = `Genau: ${parts.expr} = ${fmtPretty(expect)}`;
+      $("guideFeedback").className = "guide-feedback ok";
+      say(pick(CHEERS), "happy");
       $("guideReveal").hidden = false;
       $("guideReveal").textContent = stepText;
       markStepComplete(expect, got);
@@ -1189,6 +1190,7 @@
     $("missionText").textContent = "Welchen Schritt machst du zuerst? Danach rechnen wir ihn zusammen.";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     say(`Stein ${num} auf dem Pfad — was zuerst?`, "think");
+    hideKuerzenPanel();
     $("answerPanel").hidden = true;
     $("guidePanel").hidden = true;
     $("doneSteps").hidden = true;
@@ -1246,55 +1248,157 @@
     return eq(value, problem.answer);
   }
 
-  function acceptCorrectAnswer(problem, got) {
-    const needsKuerzen = !got.fullyReduced;
-    if (needsKuerzen) {
-      // Accept the value, but nudge her to kürzen next time (e.g. 4/6 → 2/3).
-      $("feedback").textContent = `Stimmt! Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(got.value)} (völlig gekürzt).`;
-      $("feedback").className = "feedback hint";
-      const banner = document.querySelector(".gekuerzt-banner");
-      if (banner) {
-        banner.classList.remove("pulse");
-        void banner.offsetWidth;
-        banner.classList.add("pulse");
-      }
-      say(`Geschafft! Nächstes Mal noch kürzen zu ${fmtPretty(got.value)}.`, "happy");
-    } else {
-      $("feedback").textContent = `Stimmt! ${fmtPretty(problem.answer)} — völlig gekürzt, stark!`;
-      $("feedback").className = "feedback ok";
-      say(pick(CHEERS), "happy");
+  function hideKuerzenPanel() {
+    state.kuerzen = null;
+    const panel = $("kuerzenPanel");
+    if (panel) panel.hidden = true;
+    $("kuerzenFeedback").textContent = "";
+    $("kuerzenFeedback").className = "guide-feedback";
+  }
+
+  function openKuerzenPanel(rawN, rawD, target, context) {
+    state.kuerzen = { rawN, rawD, target, context };
+    state.phase = "kuerzen";
+    const banner = document.querySelector(".gekuerzt-banner");
+    if (banner) {
+      banner.classList.remove("pulse");
+      void banner.offsetWidth;
+      banner.classList.add("pulse");
+    }
+    $("kuerzenPanel").hidden = false;
+    $("kuerzenFrom").textContent = fmtRaw(rawN, rawD);
+    $("kuerzenPrompt").textContent = `${fmtRaw(rawN, rawD)} ist noch nicht völlig gekürzt. Trag den gekürzten Bruch ein!`;
+    $("kuerzenNum").value = "";
+    $("kuerzenDen").value = "";
+    $("btnKuerzenSign").setAttribute("aria-pressed", target.n < 0 ? "true" : "false");
+    $("btnKuerzenSign").textContent = target.n < 0 ? "−" : "+";
+    // Don't pre-set minus as a giveaway for negatives that aren't obvious — only match target sign if raw was negative
+    if (rawN >= 0) {
+      $("btnKuerzenSign").setAttribute("aria-pressed", "false");
+      $("btnKuerzenSign").textContent = "+";
+    }
+    $("kuerzenFeedback").textContent = "Merke: immer völlig kürzen!";
+    $("kuerzenFeedback").className = "guide-feedback hint";
+    $("answerPanel").hidden = true;
+    $("btnNext").hidden = true;
+    window.clearTimeout(state.advanceTimer);
+    say(`Noch kürzen: ${fmtRaw(rawN, rawD)} → ?`, "think");
+    sfxNudge();
+    $("kuerzenNum").focus();
+  }
+
+  function readKuerzenFraction() {
+    const numRaw = $("kuerzenNum").value.trim().replace(/[−–—]/g, "-");
+    const denRaw = $("kuerzenDen").value.trim().replace(/[−–—]/g, "-");
+    if (!numRaw) return null;
+    if (!/^-?\d+$/.test(numRaw)) return null;
+    const nAbs = Math.abs(Number(numRaw));
+    let d = 1;
+    if (denRaw !== "") {
+      if (!/^\d+$/.test(denRaw) || Number(denRaw) === 0) return null;
+      d = Number(denRaw);
+    }
+    const negative = $("btnKuerzenSign").getAttribute("aria-pressed") === "true";
+    const n = negative ? -nAbs : nAbs;
+    return {
+      value: F(n, d),
+      fullyReduced: n === 0 || gcd(Math.abs(n), d) === 1,
+      rawN: n,
+      rawD: d,
+    };
+  }
+
+  function onCheckKuerzen() {
+    if (!state.kuerzen || state.phase !== "kuerzen") return;
+    const got = readKuerzenFraction();
+    const target = state.kuerzen.target;
+    if (!got) {
+      $("kuerzenFeedback").textContent = "Zähler und Nenner vom gekürzten Bruch eintragen.";
+      $("kuerzenFeedback").className = "guide-feedback bad";
+      return;
+    }
+    if (!got.fullyReduced) {
+      $("kuerzenFeedback").textContent = `${fmtRaw(got.rawN, got.rawD)} geht noch kleiner — bitte völlig kürzen!`;
+      $("kuerzenFeedback").className = "guide-feedback hint";
+      say("Noch nicht völlig gekürzt — weiter kürzen!", "think");
+      return;
+    }
+    if (!eq(got.value, target)) {
+      $("kuerzenFeedback").textContent = `Das ist nicht wertgleich zu ${fmtRaw(state.kuerzen.rawN, state.kuerzen.rawD)}. Nochmal kürzen.`;
+      $("kuerzenFeedback").className = "guide-feedback bad";
+      sfxNudge();
+      return;
     }
 
-    state.stars += needsKuerzen ? 1 : 2;
-    state.totalStars += needsKuerzen ? 1 : 2;
+    $("kuerzenFeedback").textContent = `Super! ${fmtRaw(state.kuerzen.rawN, state.kuerzen.rawD)} → ${fmtPretty(target)}`;
+    $("kuerzenFeedback").className = "guide-feedback ok";
+    const ctx = state.kuerzen.context;
+    hideKuerzenPanel();
+    say(`Völlig gekürzt: ${fmtPretty(target)} — stark!`, "happy");
+    sfxCheer();
+
+    if (ctx === "guide") {
+      state.phase = "guide";
+      const problem = currentProblem();
+      const stepText = problem.steps[state.guideIndex];
+      const parts = parseStepParts(stepText);
+      $("guideFeedback").textContent = `Genau: ${parts.expr} = ${fmtPretty(target)} (völlig gekürzt)`;
+      $("guideFeedback").className = "guide-feedback ok";
+      $("guideReveal").hidden = false;
+      $("guideReveal").textContent = stepText;
+      fillGuideBoxes(target);
+      markStepComplete(target, { value: target });
+      return;
+    }
+
+    // Final answer path
+    acceptCorrectAnswer(currentProblem(), { value: target, fullyReduced: true, rawN: target.n, rawD: target.d });
+  }
+
+  function onRevealKuerzen() {
+    if (!state.kuerzen) return;
+    const t = state.kuerzen.target;
+    $("btnKuerzenSign").setAttribute("aria-pressed", t.n < 0 ? "true" : "false");
+    $("btnKuerzenSign").textContent = t.n < 0 ? "−" : "+";
+    $("kuerzenNum").value = String(Math.abs(t.n));
+    $("kuerzenDen").value = t.d === 1 ? "" : String(t.d);
+    $("kuerzenFeedback").textContent = `Hilfe: völlig gekürzt ist ${fmtPretty(t)}. Tippe „Gekürzt prüfen“.`;
+    $("kuerzenFeedback").className = "guide-feedback hint";
+  }
+
+  function acceptCorrectAnswer(problem, got) {
+    $("feedback").textContent = `Stimmt! ${fmtPretty(problem.answer)} — völlig gekürzt, stark!`;
+    $("feedback").className = "feedback ok";
+    say(pick(CHEERS), "happy");
+
+    state.stars += 2;
+    state.totalStars += 2;
     state.streak += 1;
     state.solvedInRound += 1;
     saveProgress();
     updateStats();
-    popStar(needsKuerzen ? "+1" : "+2");
-    burstConfetti(needsKuerzen ? 45 : 90);
+    popStar("+2");
+    burstConfetti(90);
     sfxCheer();
     renderTrail("playTrail", Math.min(state.index + 1, state.queue.length - 1), state.queue.length, state.solvedInRound);
 
-    const unlocked = [];
     if (state.streak >= 3) {
       const s = unlockSticker("leafy");
-      if (s) unlocked.push(s.name);
-    }
-    if (unlocked.length) {
-      say(`Neuer Sticker: ${unlocked.join(", ")}!`, "happy");
-      burstConfetti(60);
+      if (s) {
+        say(`Neuer Sticker: ${s.name}!`, "happy");
+        burstConfetti(60);
+      }
     }
 
     state.phase = "doneQ";
     $("btnNext").hidden = false;
     $("answerPanel").hidden = true;
+    hideKuerzenPanel();
     $("progressBar").style.width = `${((state.index + 1) / state.queue.length) * 100}%`;
-    // Slightly longer pause when nudging so she can read the kürzen tip.
     window.clearTimeout(state.advanceTimer);
     state.advanceTimer = window.setTimeout(() => {
       if (state.phase === "doneQ") onNext();
-    }, needsKuerzen ? 2200 : 1100);
+    }, 1100);
   }
 
   function onCheck() {
@@ -1312,6 +1416,12 @@
 
     if (answersMatch(problem, got.value)) {
       snapshotScratch("lösung");
+      if (!got.fullyReduced) {
+        $("feedback").textContent = "Wert stimmt — jetzt bitte noch völlig kürzen!";
+        $("feedback").className = "feedback hint";
+        openKuerzenPanel(got.rawN, got.rawD, problem.answer, "answer");
+        return;
+      }
       acceptCorrectAnswer(problem, got);
       return;
     }
@@ -1319,7 +1429,7 @@
     state.streak = 0;
     updateStats();
     if (!got.fullyReduced) {
-      $("feedback").textContent = `Noch nicht (du hast ${fmtRaw(got.rawN, got.rawD)}). Tipp: erst kürzen → ${fmtPretty(got.value)}, dann nochmal denken.`;
+      $("feedback").textContent = `Noch nicht (du hast ${fmtRaw(got.rawN, got.rawD)}). Denk an: erst kürzen → ${fmtPretty(got.value)}.`;
     } else {
       $("feedback").textContent = `Noch nicht (du hast ${fmtRaw(got.rawN, got.rawD)}). Merke: völlig gekürzt! Nutze den Tipp.`;
     }
@@ -1330,6 +1440,10 @@
 
   function onHint() {
     const problem = currentProblem();
+    if (state.phase === "kuerzen") {
+      onRevealKuerzen();
+      return;
+    }
     if (state.phase === "guide") {
       revealCurrentStep(true);
       return;
@@ -1431,12 +1545,13 @@
     renderQuestion();
   }
 
-  // Level selection
+  // Level selection — picking a level starts immediately
   document.querySelectorAll(".level").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (btn.disabled || !state.unlocked.includes(btn.dataset.level)) return;
       state.level = btn.dataset.level;
       refreshLevelButtons();
+      startRound();
     });
   });
 
@@ -1499,6 +1614,22 @@
   $("btnCheck").addEventListener("click", onCheck);
   $("btnHint").addEventListener("click", onHint);
   $("btnNext").addEventListener("click", onNext);
+  $("btnCheckKuerzen").addEventListener("click", onCheckKuerzen);
+  $("btnRevealKuerzen").addEventListener("click", onRevealKuerzen);
+  $("btnKuerzenSign").addEventListener("click", () => {
+    const pressed = $("btnKuerzenSign").getAttribute("aria-pressed") === "true";
+    $("btnKuerzenSign").setAttribute("aria-pressed", pressed ? "false" : "true");
+    $("btnKuerzenSign").textContent = pressed ? "+" : "−";
+  });
+  $("kuerzenNum").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      $("kuerzenDen").focus();
+    }
+  });
+  $("kuerzenDen").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") onCheckKuerzen();
+  });
   $("btnCheckGuide").addEventListener("click", onCheckGuide);
   $("btnRevealStep").addEventListener("click", () => revealCurrentStep(true));
   $("btnGuideNext").addEventListener("click", onGuideNext);
