@@ -535,6 +535,7 @@
     advanceTimer: 0,
     guideIndex: 0,
     guidePassed: false,
+    guideFilled: [],
     unlocked: progress.unlocked.includes("easy")
       ? progress.unlocked
       : ["easy", ...progress.unlocked],
@@ -853,14 +854,6 @@
     setTimeout(() => enterGuidePhase(problem), 550);
   }
 
-  function stepPrompt(stepText) {
-    // Turn "Punkt: 1/3 · 1/2 = 1/6" into a question she can solve.
-    const arrow = stepText.split("→")[0];
-    const idx = arrow.lastIndexOf("=");
-    if (idx === -1) return `${stepText} = ?`;
-    return `${arrow.slice(0, idx).trim()} = ?`;
-  }
-
   function parseStepExpect(stepText) {
     const gek = stepText.match(/völlig gekürzt:\s*(-?\d+(?:\/\d+)?)/i);
     if (gek) return parseAnswer(gek[1]);
@@ -870,6 +863,42 @@
     const last = parts[parts.length - 1].trim();
     const m = last.match(/-?\d+(?:\/\d+)?/);
     return m ? parseAnswer(m[0]) : null;
+  }
+
+  function parseStepParts(stepText) {
+    const expect = parseStepExpect(stepText);
+    const beforeArrow = stepText.split("→")[0].trim();
+    const eqIdx = beforeArrow.lastIndexOf("=");
+    const leftFull = (eqIdx === -1 ? beforeArrow : beforeArrow.slice(0, eqIdx)).trim();
+    const labelMatch = leftFull.match(/^(.+?):\s*(.*)$/);
+    const label = labelMatch ? labelMatch[1].trim() : "Schritt";
+    const expr = labelMatch ? labelMatch[2].trim() : leftFull;
+    return { label, expr, expect, full: stepText };
+  }
+
+  function renderPathStations(problem) {
+    const box = $("pathStations");
+    if (!box) return;
+    box.innerHTML = "";
+    const steps = problem.steps || [];
+    steps.forEach((stepText, i) => {
+      const parts = parseStepParts(stepText);
+      const station = document.createElement("div");
+      station.className = "path-station";
+      if (i < state.guideIndex) station.classList.add("filled");
+      if (i === state.guideIndex) station.classList.add("active");
+      const filled = state.guideFilled[i];
+      const val = filled ? fmtPretty(filled) : i < state.guideIndex ? "✓" : "?";
+      station.innerHTML = `<span class="ps-num">Schritt ${i + 1}</span><span class="ps-val">${escapeHtml(val)}</span>`;
+      station.title = parts.label;
+      box.appendChild(station);
+    });
+    // Final answer station
+    const end = document.createElement("div");
+    end.className = "path-station";
+    if (state.guideIndex >= steps.length) end.classList.add("active");
+    end.innerHTML = `<span class="ps-num">Ende</span><span class="ps-val">${state.guideIndex >= steps.length ? "★" : "?"}</span>`;
+    box.appendChild(end);
   }
 
   function readGuideFraction() {
@@ -907,17 +936,29 @@
     state.guidePassed = false;
   }
 
+  function fillGuideBoxes(frac) {
+    if (!frac) return;
+    const negative = frac.n < 0;
+    $("btnGuideSign").setAttribute("aria-pressed", negative ? "true" : "false");
+    $("btnGuideSign").textContent = negative ? "−" : "+";
+    $("guideNumInput").value = String(Math.abs(frac.n));
+    $("guideDenInput").value = frac.d === 1 ? "" : String(frac.d);
+  }
+
   function renderGuideStep() {
     const problem = currentProblem();
     const steps = problem.steps || [];
     const i = state.guideIndex;
+    const parts = parseStepParts(steps[i] || "");
     $("guidePanel").hidden = false;
-    $("guideNum").textContent = String(i + 1);
-    $("guideTotal").textContent = String(steps.length);
-    $("guidePrompt").textContent = stepPrompt(steps[i] || "");
-    $("missionText").textContent = `Schritt ${i + 1} von ${steps.length} — nutze deinen Schreibzettel, dann Zwischenergebnis eintragen.`;
+    const fillCard = document.querySelector(".fill-card");
+    if (fillCard) fillCard.hidden = false;
+    $("guideLabel").textContent = `${parts.label} · Schritt ${i + 1} von ${steps.length}`;
+    $("guideExpr").textContent = parts.expr || "…";
+    $("missionText").textContent = `Rechenpfad Schritt ${i + 1}: Wert für „${parts.expr}“ eintragen.`;
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
-    say(pick(GUIDES), "think");
+    renderPathStations(problem);
+    say(`Hier eintragen: ${parts.expr} = ?`, "think");
     resetGuideInputs();
     $("guideNumInput").focus();
   }
@@ -925,6 +966,7 @@
   function enterGuidePhase(problem) {
     state.phase = "guide";
     state.guideIndex = 0;
+    state.guideFilled = [];
     $("stepChoices").hidden = true;
     $("answerPanel").hidden = true;
     $("btnNext").hidden = true;
@@ -940,29 +982,38 @@
     renderGuideStep();
   }
 
-  function appendDoneStep(text) {
+  function appendDoneStep(expr, value) {
     $("doneSteps").hidden = false;
     const li = document.createElement("li");
-    li.textContent = text;
+    li.textContent = `${expr} = ${fmtPretty(value)}`;
     $("doneStepsList").appendChild(li);
+  }
+
+  function markStepComplete(expect, got) {
+    const value = expect || got.value;
+    state.guideFilled[state.guideIndex] = value;
+    state.guidePassed = true;
+    $("btnGuideNext").hidden = false;
+    renderPathStations(currentProblem());
+    sfxStep();
   }
 
   function onCheckGuide() {
     if (state.phase !== "guide") return;
     const problem = currentProblem();
     const stepText = problem.steps[state.guideIndex];
-    const expect = parseStepExpect(stepText);
+    const parts = parseStepParts(stepText);
+    const expect = parts.expect;
     const got = readGuideFraction();
 
     if (!got) {
-      $("guideFeedback").textContent = "Trage das Zwischenergebnis als Bruch ein (Zähler / Nenner).";
+      $("guideFeedback").textContent = "Zähler (oben) und Nenner (unten) eintragen — Nenner leer = ganze Zahl.";
       $("guideFeedback").className = "guide-feedback bad";
       return;
     }
 
     if (!expect) {
-      // Can't auto-check — accept and show the worked step.
-      $("guideFeedback").textContent = "Gut — schau dir die Lösung für diesen Schritt an.";
+      $("guideFeedback").textContent = "Gut — hier ist die Lösung für diesen Schritt.";
       $("guideFeedback").className = "guide-feedback hint";
       revealCurrentStep(true);
       return;
@@ -970,23 +1021,22 @@
 
     if (eq(got.value, expect)) {
       if (!got.fullyReduced) {
-        $("guideFeedback").textContent = `Stimmt! Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(expect)}.`;
+        $("guideFeedback").textContent = `Passt! Noch kürzen: ${fmtRaw(got.rawN, got.rawD)} → ${fmtPretty(expect)}. Weiter geht’s.`;
         $("guideFeedback").className = "guide-feedback hint";
-        say(`Wert stimmt — und völlig gekürzt wäre ${fmtPretty(expect)}.`, "happy");
+        say(`Eingetragen! Gekürzt: ${fmtPretty(expect)}.`, "happy");
+        fillGuideBoxes(expect);
       } else {
-        $("guideFeedback").textContent = `Genau, ${fmtPretty(expect)} — weiter so!`;
+        $("guideFeedback").textContent = `Genau: ${parts.expr} = ${fmtPretty(expect)}`;
         $("guideFeedback").className = "guide-feedback ok";
         say(pick(CHEERS), "happy");
       }
-      sfxStep();
-      state.guidePassed = true;
-      $("btnGuideNext").hidden = false;
       $("guideReveal").hidden = false;
       $("guideReveal").textContent = stepText;
+      markStepComplete(expect, got);
       return;
     }
 
-    $("guideFeedback").textContent = `Noch nicht. Rechne nochmal auf dem Zettel — oder tippe „Schritt zeigen“.`;
+    $("guideFeedback").textContent = `Noch nicht. Rechne „${parts.expr}“ nochmal — oder tippe Hilfe zeigen.`;
     $("guideFeedback").className = "guide-feedback bad";
     say(pick(NUDGES), "sad");
     sfxNudge();
@@ -995,22 +1045,32 @@
   function revealCurrentStep(autoNextReady) {
     const problem = currentProblem();
     const stepText = problem.steps[state.guideIndex];
+    const parts = parseStepParts(stepText);
     $("guideReveal").hidden = false;
     $("guideReveal").textContent = stepText;
-    $("guideFeedback").textContent = "Hier ist der Schritt — schreib ihn auf, dann weiter.";
+    if (parts.expect) {
+      fillGuideBoxes(parts.expect);
+      markStepComplete(parts.expect, { value: parts.expect });
+      $("guideFeedback").textContent = `Hilfe: ${parts.expr} = ${fmtPretty(parts.expect)} — tippe Weiter auf dem Pfad.`;
+    } else {
+      state.guidePassed = true;
+      $("btnGuideNext").hidden = false;
+      $("guideFeedback").textContent = "Hier ist der Schritt — dann weiter auf dem Pfad.";
+    }
     $("guideFeedback").className = "guide-feedback hint";
-    state.guidePassed = true;
-    $("btnGuideNext").hidden = false;
+    say("Hilfe liegt bereit — schau und geh weiter.", "think");
     if (autoNextReady) $("btnGuideNext").focus();
   }
 
   function onGuideNext() {
-    if (state.phase !== "guide") return;
+    if (state.phase !== "guide" || !state.guidePassed) return;
     const problem = currentProblem();
-    const stepText = problem.steps[state.guideIndex];
-    appendDoneStep(stepText);
+    const parts = parseStepParts(problem.steps[state.guideIndex]);
+    const filled = state.guideFilled[state.guideIndex] || parts.expect;
+    if (filled) appendDoneStep(parts.expr, filled);
     state.guideIndex += 1;
     if (state.guideIndex >= problem.steps.length) {
+      renderPathStations(problem);
       enterAnswerPhase(problem);
       return;
     }
@@ -1079,18 +1139,23 @@
 
   function enterAnswerPhase(problem) {
     state.phase = "answer";
-    $("missionText").textContent = "Alle Schritte geschafft — jetzt das Endergebnis (völlig gekürzt):";
+    state.guideIndex = (problem.steps || []).length;
+    $("missionText").textContent = "Letzter Stein auf dem Pfad — Endergebnis (völlig gekürzt) eintragen:";
     $("termBoard").innerHTML = highlightTerm(problem.display, problem.highlightFirst);
     $("stepChoices").hidden = true;
-    $("guidePanel").hidden = true;
+    $("guidePanel").hidden = false;
+    const fillCard = document.querySelector(".fill-card");
+    if (fillCard) fillCard.hidden = true;
+    renderPathStations(problem);
     $("answerPanel").hidden = false;
     $("scratchPad").hidden = false;
     $("scratchTerm").textContent = `Term: ${problem.display}`;
     resetFractionInputs();
     $("numInput").focus();
     $("btnNext").hidden = true;
-    $("feedback").textContent = "Du hast die Schritte — trag nur noch das Endergebnis ein.";
+    $("feedback").textContent = "Alle Zwischenschritte stehen — jetzt nur noch das Endergebnis.";
     $("feedback").className = "feedback ok";
+    say("Letzter Wert auf dem Pfad — du bist fast da!", "happy");
   }
 
   function highlightTerm(display, fragment) {

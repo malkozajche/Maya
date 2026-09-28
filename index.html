@@ -166,32 +166,35 @@
       <div id="stepChoices" class="choices" hidden></div>
 
       <div id="guidePanel" class="guide" hidden>
-        <p class="guide-progress">
-          Schritt <span id="guideNum">1</span> von <span id="guideTotal">2</span>
-        </p>
-        <p class="guide-prompt" id="guidePrompt"></p>
-        <p class="guide-ask" id="guideAsk">Was kommt heraus? Nutze deinen Schreibzettel unten — wir rühren ihn nicht an.</p>
-        <div class="guide-frac-row" id="guideFracRow">
-          <span class="guide-frac-label">Zwischenergebnis</span>
-          <button type="button" class="sign-btn" id="btnGuideSign" aria-pressed="false" title="Vorzeichen">+</button>
-          <div class="frac-input guide-frac">
-            <input id="guideNumInput" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Zähler Zwischenergebnis" placeholder="Zähler" />
-            <span class="frac-bar" aria-hidden="true"></span>
-            <input id="guideDenInput" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Nenner Zwischenergebnis" placeholder="Nenner" />
-          </div>
-          <button type="button" class="btn primary" id="btnCheckGuide">Schritt prüfen</button>
-        </div>
-        <p class="guide-feedback" id="guideFeedback" role="status"></p>
-        <p class="guide-reveal" id="guideReveal" hidden></p>
-        <div class="guide-actions">
-          <button type="button" class="btn soft" id="btnRevealStep">Schritt zeigen</button>
-          <button type="button" class="btn primary" id="btnGuideNext" hidden>Nächster Schritt</button>
-        </div>
-      </div>
+        <p class="guide-kicker">Rechenpfad — Werte eintragen</p>
+        <div class="path-stations" id="pathStations" aria-label="Schritte auf dem Rechenpfad"></div>
 
-      <div id="doneSteps" class="done-steps" hidden>
-        <p class="done-steps-title">Deine Schritte</p>
-        <ol id="doneStepsList"></ol>
+        <div class="fill-card">
+          <p class="fill-label" id="guideLabel">Schritt</p>
+          <div class="fill-equation" id="fillEquation">
+            <span class="fill-expr" id="guideExpr">…</span>
+            <span class="fill-eq">=</span>
+            <button type="button" class="sign-btn" id="btnGuideSign" aria-pressed="false" title="Vorzeichen">+</button>
+            <div class="frac-input guide-frac fill-blank">
+              <input id="guideNumInput" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Zähler" placeholder="?" />
+              <span class="frac-bar" aria-hidden="true"></span>
+              <input id="guideDenInput" class="frac-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Nenner" placeholder="?" />
+            </div>
+          </div>
+          <p class="guide-ask">Trage den Wert hier ein. Dein Schreibzettel unten bleibt unberührt.</p>
+          <div class="guide-actions">
+            <button type="button" class="btn primary" id="btnCheckGuide">Wert prüfen</button>
+            <button type="button" class="btn soft" id="btnRevealStep">Hilfe zeigen</button>
+            <button type="button" class="btn primary" id="btnGuideNext" hidden>Weiter auf dem Pfad</button>
+          </div>
+          <p class="guide-feedback" id="guideFeedback" role="status"></p>
+          <p class="guide-reveal" id="guideReveal" hidden></p>
+        </div>
+
+        <div id="doneSteps" class="done-steps" hidden>
+          <p class="done-steps-title">Schon eingetragen</p>
+          <ol id="doneStepsList"></ol>
+        </div>
       </div>
 
       <section class="scratch" id="scratchPad" aria-label="Schreibzettel">
