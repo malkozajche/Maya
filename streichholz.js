@@ -391,24 +391,26 @@
     return `<svg class="mini-svg" viewBox="0 0 ${width} 36" aria-hidden="true">${lines}</svg>`;
   }
 
+  /** Turn typed multiply/minus glyphs into * and - (Rechnung, no variable x). */
   function normalizeCalc(s) {
     return String(s || "")
       .toLowerCase()
+      .replace(/[·⋅∙•×✕✖✱⋆☆]/g, "*")
+      .replace(/−|–|—/g, "-")
+      // keyboard "x" / "X" as Malzeichen between numbers or before "("
+      .replace(/(\d)\s*[xX]\s*(?=\d|\()/g, "$1*")
       .replace(/\s+/g, "")
-      .replace(/·/g, "*")
-      .replace(/×/g, "*")
-      .replace(/−/g, "-")
-      .replace(/–/g, "-");
+      .replace(/\*{2,}/g, "*");
   }
 
+  /** Term with variable x — keep letter x, still accept · × * as Malzeichen. */
   function normalizeTerm(s) {
     return String(s || "")
       .toLowerCase()
+      .replace(/[·⋅∙•×✕✖✱⋆]/g, "*")
+      .replace(/−|–|—/g, "-")
       .replace(/\s+/g, "")
-      .replace(/·/g, "*")
-      .replace(/×/g, "*")
-      .replace(/−/g, "-")
-      .replace(/–/g, "-");
+      .replace(/\*{2,}/g, "*");
   }
 
   function isSimplifiedTerm(s) {
@@ -418,12 +420,24 @@
       "1+2x",
       "2*x+1",
       "1+2*x",
-      "2·x+1",
-      "1+2·x",
       "(2x)+1",
       "1+(2x)",
+      "2(x)+1",
+      "(2)*x+1",
+      "1+(2)*x",
     ]);
     return ok.has(t);
+  }
+
+  function insertAtCursor(input, text) {
+    if (!input) return;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    const v = input.value;
+    input.value = v.slice(0, start) + text + v.slice(end);
+    const pos = start + text.length;
+    input.focus();
+    input.setSelectionRange(pos, pos);
   }
 
   function renderStageGrid() {
@@ -629,6 +643,29 @@
       inp.placeholder = g.placeholder || "3 + … · 2";
       inp.setAttribute("aria-label", g.label);
       row.appendChild(inp);
+      const tools = document.createElement("div");
+      tools.className = "symbol-tools";
+      tools.setAttribute("aria-label", "Zeichen einfügen");
+      [
+        { label: "·", insert: " · ", title: "Malpunkt" },
+        { label: "+", insert: " + ", title: "Plus" },
+        { label: "−", insert: " − ", title: "Minus" },
+        { label: "(", insert: "(", title: "Klammer auf" },
+        { label: ")", insert: ")", title: "Klammer zu" },
+      ].forEach((sym) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "sym-btn";
+        b.textContent = sym.label;
+        b.title = sym.title;
+        b.addEventListener("click", () => insertAtCursor(inp, sym.insert));
+        tools.appendChild(b);
+      });
+      row.appendChild(tools);
+      const tip = document.createElement("p");
+      tip.className = "answer-hint";
+      tip.textContent = "Malzeichen: tippe · oben, oder * oder x auf der Tastatur";
+      row.appendChild(tip);
       inp.focus();
     }
     renderTable();
@@ -648,12 +685,11 @@
     if (g.kind === "num") {
       ok = Number(val.replace(",", ".")) === g.answer;
     } else {
-      ok = normalizeCalc(val) === g.answer || normalizeCalc(val) === g.answer.replace(/\*/g, "·");
-      // also accept with · already normalized
       ok = normalizeCalc(val) === normalizeCalc(g.answer);
     }
     if (!ok) {
-      $("tableFeedback").textContent = "Noch nicht — nutze den Tipp oder den Schreibzettel.";
+      $("tableFeedback").textContent =
+        "Noch nicht — für · kannst du * oder x tippen, oder den ·-Knopf nutzen.";
       $("tableFeedback").className = "feedback bad";
       say("Fast! Schau nochmal auf das Muster.", "think");
       sfxBad();
@@ -1045,6 +1081,11 @@
     });
     $("kuerzInput").addEventListener("keydown", (e) => {
       if (e.key === "Enter") checkKuerz();
+    });
+    $("kuerzTools")?.addEventListener("click", (e) => {
+      const btn = e.target.closest(".sym-btn");
+      if (!btn) return;
+      insertAtCursor($("kuerzInput"), btn.dataset.insert || btn.textContent);
     });
 
     $("btnCheckSub").addEventListener("click", checkSub);

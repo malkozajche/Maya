@@ -222,7 +222,14 @@
         <div class="fill-card">
           <p class="fill-label">Gekürzter Term</p>
           <input id="kuerzInput" class="term-blank" type="text" autocomplete="off" aria-label="Gekürzter Term" placeholder="z. B. 2x + 1" />
-          <p class="answer-hint">Erlaubt: 2x+1 · 1+2x · 2·x+1</p>
+          <div class="symbol-tools" id="kuerzTools" aria-label="Zeichen einfügen">
+            <button type="button" class="sym-btn" data-insert=" · " title="Malpunkt">·</button>
+            <button type="button" class="sym-btn" data-insert="x" title="Variable x">x</button>
+            <button type="button" class="sym-btn" data-insert=" + " title="Plus">+</button>
+            <button type="button" class="sym-btn" data-insert="1" title="Eins">1</button>
+            <button type="button" class="sym-btn" data-insert="2" title="Zwei">2</button>
+          </div>
+          <p class="answer-hint">Erlaubt: 2x+1 · 1+2x · 2·x+1 (Malzeichen: · * oder weglassen)</p>
           <div class="guide-actions">
             <button type="button" class="btn primary" id="btnCheckKuerz">Gekürzt prüfen</button>
             <button type="button" class="btn soft" id="btnHintKuerz">Tipp</button>
