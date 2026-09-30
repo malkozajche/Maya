@@ -532,12 +532,12 @@
       "Tippe + Dreieck: die 2 neuen Hölzer kommen an die freie Seite. Baue mindestens bis 4.";
     say("Zwei neue Hölzer an die freie Seite — so wächst die Kette!", "think");
     state.triangles = 1;
-    updateBuild();
+    updateBuild(false);
   }
 
-  function updateBuild() {
+  function updateBuild(animateNew = false) {
     const n = state.triangles;
-    drawTriangles($("matchSvg"), n, true);
+    drawTriangles($("matchSvg"), n, animateNew && n > 1);
     $("triCount").textContent = String(n);
     $("stickCount").textContent = String(sticksFor(n));
     $("btnLessTri").disabled = n <= 1;
@@ -976,7 +976,7 @@
       if (state.triangles < 5) {
         state.triangles += 1;
         sfxClick();
-        updateBuild();
+        updateBuild(true);
         if (state.triangles >= 4) say("Muster klar? Dann tippe Weiter!", "happy");
       }
     });
@@ -984,7 +984,7 @@
       if (state.triangles > 1) {
         state.triangles -= 1;
         sfxClick();
-        updateBuild();
+        updateBuild(false);
       }
     });
     $("btnBuildNext").addEventListener("click", () => completeStage());
