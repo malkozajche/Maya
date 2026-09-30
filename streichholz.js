@@ -277,65 +277,118 @@
     return n <= 0 ? 0 : 3 + (n - 1) * 2;
   }
 
+  /**
+   * Zigzag matchstick chain: each new triangle shares one side;
+   * the 2 new sticks are added on the free outer side (worksheet style △▽△▽).
+   * Returns unique segments {x1,y1,x2,y2, addedAt} where addedAt is triangle index (0-based).
+   */
+  function chainSegments(count, size, originX, baseY) {
+    const n = Math.max(0, count | 0);
+    if (n === 0) return [];
+    const h = (size * Math.sqrt(3)) / 2;
+    const bottom = [];
+    const top = [];
+    // Up triangle: 2 bottom + 1 top; down triangle: 1 bottom + 2 top (zigzag strip).
+    const needBottom = Math.ceil(n / 2) + 1;
+    const needTop = Math.floor(n / 2) + 1;
+    for (let i = 0; i < needBottom; i++) {
+      bottom.push({ x: originX + i * size, y: baseY });
+    }
+    for (let i = 0; i < needTop; i++) {
+      top.push({ x: originX + size / 2 + i * size, y: baseY - h });
+    }
+
+    const edgeKey = (a, b) => {
+      const k1 = `${Math.round(a.x * 10)},${Math.round(a.y * 10)}`;
+      const k2 = `${Math.round(b.x * 10)},${Math.round(b.y * 10)}`;
+      return k1 < k2 ? `${k1}|${k2}` : `${k2}|${k1}`;
+    };
+
+    const seen = new Map();
+    const segs = [];
+    const addEdge = (a, b, tri) => {
+      const key = edgeKey(a, b);
+      if (seen.has(key)) return;
+      seen.set(key, tri);
+      segs.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, addedAt: tri });
+    };
+
+    for (let i = 0; i < n; i++) {
+      if (i % 2 === 0) {
+        const bi = i / 2;
+        addEdge(bottom[bi], bottom[bi + 1], i);
+        addEdge(bottom[bi + 1], top[bi], i);
+        addEdge(top[bi], bottom[bi], i);
+      } else {
+        const bi = (i + 1) / 2;
+        addEdge(bottom[bi], top[bi - 1], i);
+        addEdge(top[bi - 1], top[bi], i);
+        addEdge(top[bi], bottom[bi], i);
+      }
+    }
+    return segs;
+  }
+
+  function drawStickSegment(svg, seg, { animate = false, delay = 0, tip = true } = {}) {
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", seg.x1);
+    line.setAttribute("y1", seg.y1);
+    line.setAttribute("x2", seg.x2);
+    line.setAttribute("y2", seg.y2);
+    line.setAttribute("class", "stick-line" + (animate ? " stick-draw" : ""));
+    if (animate) line.style.animationDelay = `${delay}s`;
+    svg.appendChild(line);
+    if (tip) {
+      const tipDot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      tipDot.setAttribute("cx", seg.x2);
+      tipDot.setAttribute("cy", seg.y2);
+      tipDot.setAttribute("r", 3.2);
+      tipDot.setAttribute("class", "stick-tip");
+      svg.appendChild(tipDot);
+      const tipDot2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      tipDot2.setAttribute("cx", seg.x1);
+      tipDot2.setAttribute("cy", seg.y1);
+      tipDot2.setAttribute("r", 3.2);
+      tipDot2.setAttribute("class", "stick-tip");
+      svg.appendChild(tipDot2);
+    }
+  }
+
   function drawTriangles(svg, count, animateLast = false) {
     svg.innerHTML = "";
-    const baseY = 110;
-    const size = 52;
-    const step = size * 0.92;
-    const startX = 30;
-    for (let i = 0; i < count; i++) {
-      const x0 = startX + i * step;
-      const tipX = x0 + size / 2;
-      const tipY = baseY - size * 0.9;
-      const left = `${x0},${baseY}`;
-      const right = `${x0 + size},${baseY}`;
-      const tip = `${tipX},${tipY}`;
-      const segs = [
-        [left, tip],
-        [tip, right],
-      ];
-      if (i === 0) segs.push([left, right]);
-      segs.forEach(([a, b], si) => {
-        const [x1, y1] = a.split(",").map(Number);
-        const [x2, y2] = b.split(",").map(Number);
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", x1);
-        line.setAttribute("y1", y1);
-        line.setAttribute("x2", x2);
-        line.setAttribute("y2", y2);
-        line.setAttribute("class", "stick-line" + (animateLast && i === count - 1 ? " stick-draw" : ""));
-        if (animateLast && i === count - 1) {
-          line.style.animationDelay = `${si * 0.12}s`;
-        }
-        svg.appendChild(line);
-        const tipDot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        tipDot.setAttribute("cx", x2);
-        tipDot.setAttribute("cy", y2);
-        tipDot.setAttribute("r", 3.2);
-        tipDot.setAttribute("class", "stick-tip");
-        svg.appendChild(tipDot);
+    const size = 56;
+    const originX = 28;
+    const baseY = 118;
+    const segs = chainSegments(count, size, originX, baseY);
+    const width = Math.max(200, originX + (Math.floor(count / 2) + 1) * size + size / 2 + 24);
+    svg.setAttribute("viewBox", `0 0 ${width} 140`);
+
+    let newIndex = 0;
+    segs.forEach((seg) => {
+      const isNew = animateLast && count > 0 && seg.addedAt === count - 1;
+      drawStickSegment(svg, seg, {
+        animate: isNew,
+        delay: isNew ? newIndex++ * 0.14 : 0,
+        tip: true,
       });
-    }
+    });
   }
 
   function miniPicture(n) {
     if (!n) return '<span style="color:#999">—</span>';
-    const w = 20 + n * 16;
-    let lines = "";
+    const count = Math.min(n, 5);
+    const size = 16;
+    const originX = 3;
     const baseY = 30;
-    const size = 18;
-    const step = 16;
-    for (let i = 0; i < Math.min(n, 5); i++) {
-      const x0 = 4 + i * step;
-      const tipX = x0 + size / 2;
-      const tipY = 6;
-      lines += `<line x1="${x0}" y1="${baseY}" x2="${tipX}" y2="${tipY}" stroke="#c4783a" stroke-width="2.5" stroke-linecap="round"/>`;
-      lines += `<line x1="${tipX}" y1="${tipY}" x2="${x0 + size}" y2="${baseY}" stroke="#c4783a" stroke-width="2.5" stroke-linecap="round"/>`;
-      if (i === 0) {
-        lines += `<line x1="${x0}" y1="${baseY}" x2="${x0 + size}" y2="${baseY}" stroke="#c4783a" stroke-width="2.5" stroke-linecap="round"/>`;
-      }
-    }
-    return `<svg class="mini-svg" viewBox="0 0 ${w} 36" aria-hidden="true">${lines}</svg>`;
+    const segs = chainSegments(count, size, originX, baseY);
+    const width = originX + (Math.floor(count / 2) + 1) * size + size / 2 + 6;
+    const lines = segs
+      .map(
+        (s) =>
+          `<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="#c4783a" stroke-width="2.5" stroke-linecap="round"/>`
+      )
+      .join("");
+    return `<svg class="mini-svg" viewBox="0 0 ${width} 36" aria-hidden="true">${lines}</svg>`;
   }
 
   function normalizeCalc(s) {
@@ -476,8 +529,8 @@
   function enterBuild() {
     $("panel-build").hidden = false;
     $("missionText").textContent =
-      "Tippe + Dreieck und schau, wie die Hölzer wachsen. Baue mindestens bis 4.";
-    say("Jedes neue Dreieck braucht zwei neue Hölzer!", "think");
+      "Tippe + Dreieck: die 2 neuen Hölzer kommen an die freie Seite. Baue mindestens bis 4.";
+    say("Zwei neue Hölzer an die freie Seite — so wächst die Kette!", "think");
     state.triangles = 1;
     updateBuild();
   }

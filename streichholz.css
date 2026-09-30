@@ -1035,9 +1035,11 @@ main {
 }
 
 .stick-draw {
-  stroke-dasharray: 80;
-  stroke-dashoffset: 80;
-  animation: drawStick 0.45s ease forwards;
+  stroke: #e85d3a;
+  stroke-width: 6;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: drawStick 0.5s ease forwards;
 }
 
 @keyframes drawStick {
