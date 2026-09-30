@@ -892,6 +892,38 @@ main {
   font-size: 0.85rem;
   color: var(--muted);
   font-weight: 700;
+  width: 100%;
+}
+
+.symbol-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0.15rem 0 0.25rem;
+}
+
+.sym-btn {
+  min-width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 12px;
+  border: 2px solid rgba(196, 120, 58, 0.28);
+  background: #fff8ef;
+  color: var(--wood-deep);
+  font: inherit;
+  font-weight: 800;
+  font-size: 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(139, 78, 36, 0.1);
+}
+
+.sym-btn:hover {
+  border-color: var(--amber);
+  background: #ffe8c8;
+}
+
+.sym-btn:active {
+  transform: translateY(1px);
 }
 
 .explain-label {
