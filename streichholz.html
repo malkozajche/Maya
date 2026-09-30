@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maya · Streichholz-Terme</title>
+  <meta name="description" content="Mia baut Dreiecke aus Streichhölzern — finde das Muster, den Term und die Variable." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="streichholz.css" />
+</head>
+<body>
+  <div class="sky" aria-hidden="true">
+    <span class="spark s1"></span>
+    <span class="spark s2"></span>
+    <span class="spark s3"></span>
+  </div>
+  <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+
+  <header class="top">
+    <a class="brand" href="index.html">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <p class="brand-name">Maya</p>
+        <p class="brand-tag">Streichholz-Terme</p>
+      </div>
+    </a>
+    <div class="stats" aria-live="polite">
+      <div class="stat">
+        <span class="stat-label">Sterne</span>
+        <strong id="starCount">0</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Stufe</span>
+        <strong id="stageNum">0</strong>/<span id="stageTotal">7</span>
+      </div>
+      <button type="button" class="sound-toggle" id="btnSound" aria-pressed="true">Sound an</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section id="screen-home" class="screen active">
+      <div class="hero">
+        <div class="buddy">
+          <div class="mascot" aria-hidden="true">
+            <div class="fox" id="homeFox">
+              <div class="ear left"></div>
+              <div class="ear right"></div>
+              <div class="face">
+                <div class="eye left"></div>
+                <div class="eye right"></div>
+                <div class="nose"></div>
+                <div class="cheek left"></div>
+                <div class="cheek right"></div>
+              </div>
+            </div>
+          </div>
+          <p class="speech" id="homeSpeech">Mia stapelt Streichhölzer — und du findest den geheimen Term!</p>
+        </div>
+        <h1>Streichholz-Zauber</h1>
+        <p class="lede">
+          Mia legt Dreiecke. Wie viele Hölzer braucht sie für <em>100</em>?
+          Bau mit, füll die Tabelle, entdecke die <em>Variable</em> — und kürz den Term.
+        </p>
+        <div class="cta-row">
+          <button type="button" class="btn primary" id="btnStart">Abenteuer starten</button>
+          <button type="button" class="btn ghost" id="btnHow">So geht’s</button>
+          <a class="btn ghost" href="index.html">Zum Bruch-Pfad</a>
+        </div>
+      </div>
+
+      <section class="stage-pick" aria-label="Stufen">
+        <h2>Dein Pfad</h2>
+        <p class="levels-sub">Tippe eine Stufe — es geht sofort los.</p>
+        <div class="stage-grid" id="stageGrid"></div>
+      </section>
+    </section>
+
+    <!-- HOW -->
+    <section id="screen-how" class="screen">
+      <button type="button" class="back" id="btnBackHow">← Zurück</button>
+      <h2>Was dich erwartet</h2>
+      <ol class="rules">
+        <li>Dreiecke aus <strong>Streichhölzern</strong> bauen und zählen</li>
+        <li>Lücken in der <strong>Tabelle</strong> füllen</li>
+        <li>Regel in Worten beschreiben</li>
+        <li>Für <strong>100 Dreiecke</strong> rechnen</li>
+        <li>Den richtigen <strong>Term</strong> wählen</li>
+        <li>Den Term <strong>kürzen</strong></li>
+        <li><strong>x = 17</strong> einsetzen und erklären</li>
+      </ol>
+      <button type="button" class="btn primary" id="btnStartFromHow">Los geht’s</button>
+    </section>
+
+    <!-- PLAY -->
+    <section id="screen-play" class="screen">
+      <div class="play-top">
+        <button type="button" class="back" id="btnHome">← Menü</button>
+        <div class="progress-wrap">
+          <div class="progress" id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="trail play-trail" id="playTrail" aria-label="Fortschritt"></div>
+
+      <div class="buddy play-buddy">
+        <div class="mascot tiny" aria-hidden="true">
+          <div class="fox" id="playFox">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="face">
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+              <div class="nose"></div>
+              <div class="cheek left"></div>
+              <div class="cheek right"></div>
+            </div>
+          </div>
+        </div>
+        <p class="speech" id="playSpeech">Zähl mit — jedes neue Dreieck braucht zwei neue Hölzer!</p>
+      </div>
+
+      <h2 class="stage-title" id="stageTitle">Stufe</h2>
+      <p class="mission" id="missionText"></p>
+
+      <!-- Stage panels -->
+      <div id="panel-build" class="panel" hidden>
+        <div class="match-stage">
+          <svg id="matchSvg" viewBox="0 0 420 140" role="img" aria-label="Streichholz-Dreiecke"></svg>
+          <div class="match-hud">
+            <span><strong id="triCount">1</strong> Dreieck(e)</span>
+            <span><strong id="stickCount">3</strong> Hölzer</span>
+          </div>
+          <div class="cta-row">
+            <button type="button" class="btn soft" id="btnLessTri" disabled>− Dreieck</button>
+            <button type="button" class="btn primary" id="btnMoreTri">+ Dreieck</button>
+          </div>
+        </div>
+        <p class="hint-line">Baue bis zu 5 Dreiecke. Siehst du das Muster? Dann weiter!</p>
+        <button type="button" class="btn primary" id="btnBuildNext" disabled>Muster erkannt — weiter</button>
+      </div>
+
+      <div id="panel-table" class="panel" hidden>
+        <div class="table-wrap">
+          <table class="fill-table" id="fillTable">
+            <thead>
+              <tr>
+                <th>Anzahl Dreiecke</th>
+                <th>Bild</th>
+                <th>Rechnung</th>
+                <th>Anzahl Streichhölzer</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="fill-card" id="tableFillCard">
+          <p class="fill-label" id="tableFillLabel">Nächste Lücke</p>
+          <div class="fill-row" id="tableFillRow"></div>
+          <div class="guide-actions">
+            <button type="button" class="btn primary" id="btnCheckTable">Prüfen</button>
+            <button type="button" class="btn soft" id="btnHintTable">Tipp</button>
+          </div>
+          <p class="feedback" id="tableFeedback" role="status"></p>
+        </div>
+      </div>
+
+      <div id="panel-words" class="panel" hidden>
+        <p class="prompt-box">Beschreibe in Worten: Wie berechnet man die Anzahl der Streichhölzer für beliebig viele Dreiecke?</p>
+        <textarea id="wordsInput" class="words-box" rows="5" placeholder="z. B. Das erste Dreieck braucht 3 Hölzer. Jedes weitere braucht 2 dazu…"></textarea>
+        <div class="chips" id="wordHints" aria-label="Hilfswörter">
+          <button type="button" class="chip" data-chip="erstes Dreieck 3">erstes Dreieck 3</button>
+          <button type="button" class="chip" data-chip="jedes weitere 2">jedes weitere 2</button>
+          <button type="button" class="chip" data-chip="plus 2 Hölzer">plus 2 Hölzer</button>
+        </div>
+        <div class="guide-actions">
+          <button type="button" class="btn primary" id="btnCheckWords">Beschreibung prüfen</button>
+          <button type="button" class="btn soft" id="btnHintWords">Tipp</button>
+        </div>
+        <p class="feedback" id="wordsFeedback" role="status"></p>
+      </div>
+
+      <div id="panel-hundred" class="panel" hidden>
+        <p class="prompt-box">Wie viele Streichhölzer braucht Mia für <strong>100 Dreiecke</strong>?</p>
+        <div class="path-stations" id="hundredPath"></div>
+        <div class="fill-card">
+          <p class="fill-label" id="hundredLabel">Schritt eintragen</p>
+          <div class="fill-equation">
+            <span class="fill-expr" id="hundredExpr">3 + (100 − 1) · 2</span>
+            <span class="fill-eq">=</span>
+            <input id="hundredInput" class="num-blank" type="text" inputmode="numeric" autocomplete="off" aria-label="Ergebnis" placeholder="?" />
+          </div>
+          <div class="guide-actions">
+            <button type="button" class="btn primary" id="btnCheckHundred">Prüfen</button>
+            <button type="button" class="btn soft" id="btnHintHundred">Tipp</button>
+          </div>
+          <p class="feedback" id="hundredFeedback" role="status"></p>
+        </div>
+      </div>
+
+      <div id="panel-cards" class="panel" hidden>
+        <p class="prompt-box">Für die Anzahl der Dreiecke schreiben wir <strong>x</strong>. Welches Kärtchen berechnet die Streichhölzer?</p>
+        <div class="term-cards" id="termCards" role="group" aria-label="Term-Kärtchen">
+          <button type="button" class="term-card" data-term="wrong1">3 + 2 · x</button>
+          <button type="button" class="term-card" data-term="correct">3 + (x − 1) · 2</button>
+          <button type="button" class="term-card" data-term="wrong2">3 + (x + 1) · 2</button>
+        </div>
+        <p class="feedback" id="cardsFeedback" role="status"></p>
+        <div class="merke" id="merkeBox" hidden>
+          <p class="merke-title">Merke</p>
+          <p>Man nennt <strong>x</strong> eine <strong>Variable</strong>. Ausdrücke wie <em>3 + (x − 1) · 2</em> nennt man einen <strong>Term</strong>.</p>
+          <p>Setzt man Zahlen für x ein, kann man den Wert des Terms berechnen.</p>
+        </div>
+        <button type="button" class="btn primary" id="btnCardsNext" hidden>Weiter zum Kürzen</button>
+      </div>
+
+      <div id="panel-kuerz" class="panel" hidden>
+        <p class="prompt-box">Kürzere Form! Vereinfache deinen Term so weit wie möglich.</p>
+        <p class="kuerz-from">3 + (x − 1) · 2 <span class="arrow">→</span> ?</p>
+        <div class="fill-card">
+          <p class="fill-label">Gekürzter Term</p>
+          <input id="kuerzInput" class="term-blank" type="text" autocomplete="off" aria-label="Gekürzter Term" placeholder="z. B. 2x + 1" />
+          <p class="answer-hint">Erlaubt: 2x+1 · 1+2x · 2·x+1</p>
+          <div class="guide-actions">
+            <button type="button" class="btn primary" id="btnCheckKuerz">Gekürzt prüfen</button>
+            <button type="button" class="btn soft" id="btnHintKuerz">Tipp</button>
+          </div>
+          <p class="feedback" id="kuerzFeedback" role="status"></p>
+        </div>
+      </div>
+
+      <div id="panel-sub" class="panel" hidden>
+        <p class="prompt-box">Setze für x die Zahl <strong>17</strong> ein und berechne den Wert. Was hast du damit berechnet?</p>
+        <div class="path-stations" id="subPath"></div>
+        <div class="fill-card">
+          <p class="fill-label">Wert des Terms</p>
+          <div class="fill-equation">
+            <span class="fill-expr" id="subExpr">3 + (17 − 1) · 2</span>
+            <span class="fill-eq">=</span>
+            <input id="subInput" class="num-blank" type="text" inputmode="numeric" autocomplete="off" aria-label="Wert" placeholder="?" />
+          </div>
+          <label class="explain-label" for="subExplain">Erkläre in Worten:</label>
+          <textarea id="subExplain" class="words-box short" rows="3" placeholder="z. B. Das sind die Streichhölzer für 17 Dreiecke."></textarea>
+          <div class="guide-actions">
+            <button type="button" class="btn primary" id="btnCheckSub">Prüfen</button>
+            <button type="button" class="btn soft" id="btnHintSub">Tipp</button>
+          </div>
+          <p class="feedback" id="subFeedback" role="status"></p>
+        </div>
+      </div>
+
+      <section class="scratch" id="scratchPad" aria-label="Schreibzettel">
+        <div class="scratch-head">
+          <div>
+            <p class="scratch-title">Dein Schreibzettel</p>
+            <p class="scratch-sub">Nur für dich — kritzel, rechne, male. Wir speichern ihn für Mama/Papa.</p>
+          </div>
+        </div>
+        <p class="scratch-term" id="scratchTerm">Thema: Terme mit einer Variablen</p>
+        <textarea id="scratchFree" class="scratch-free" rows="10" placeholder="Hier ist dein Platz… rechnen, kürzen, kritzeln — alles bleibt stehen."></textarea>
+      </section>
+
+      <div class="star-pop" id="starPop" hidden>+Stern</div>
+    </section>
+
+    <!-- DONE -->
+    <section id="screen-done" class="screen">
+      <div class="done-burst" aria-hidden="true"></div>
+      <p class="level-cleared">Abenteuer geschafft</p>
+      <h2>Mia ist beeindruckt, Maya!</h2>
+      <p class="lede" id="doneMessage">Du hast den Term gefunden, gekürzt und x eingesetzt.</p>
+      <p class="big-stars" id="finalStars">★★★★★</p>
+      <div class="cta-row">
+        <button type="button" class="btn primary" id="btnAgain">Nochmal spielen</button>
+        <a class="btn ghost" href="index.html">Zum Bruch-Pfad</a>
+        <button type="button" class="btn ghost" id="btnDoneHome">Zum Start</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Buch-Thema: 4. Terme mit einer Variablen · Streichholz-Dreiecke</p>
+    <p class="more"><a href="index.html">← Zurück zu Mayas Termen-Abenteuer</a></p>
+  </footer>
+
+  <script src="streichholz.js"></script>
+</body>
+</html>

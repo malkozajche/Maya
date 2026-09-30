@@ -6,6 +6,8 @@ A cute, gamified practice page for **order of operations with fractions** (Punkt
 
 **https://malkozajche.github.io/Maya/**
 
+**Streichholz-Terme (Variable):** https://malkozajche.github.io/Maya/streichholz.html
+
 ## How it works
 
 1. Pick a level (Sanft / Mutig / Sternenflug)
