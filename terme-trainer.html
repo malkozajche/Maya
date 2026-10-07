@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terme-Trainer – Terme aufstellen</title>
+<style>:root{--blue:#2b5fd9;--green:#1f9d55;--red:#d64545;--orange:#f08c00;--bg:#f3f6ff;--card:#fff;--ink:#1d2433;--soft:#e8eefc}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:18px;line-height:1.45}
+header{background:linear-gradient(120deg,#2b5fd9,#7a4cd9);color:#fff;padding:14px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+header h1{font-size:22px;margin:0;flex:1 1 220px;cursor:pointer}
+.score{font-weight:700;font-size:20px;white-space:nowrap}
+.progress{flex:1 1 200px;height:16px;background:rgba(255,255,255,.3);border-radius:10px;overflow:hidden;min-width:140px}
+.progress>div{height:100%;background:#ffd43b;width:0;transition:width .6s}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:var(--card);border-radius:16px;padding:16px 18px;margin:14px 0;box-shadow:0 2px 10px rgba(30,50,120,.08)}
+h2{margin:.2em 0 .4em;font-size:24px}
+h3{margin:.2em 0 .5em;font-size:20px;color:var(--blue)}
+.btn{font:inherit;font-size:18px;font-weight:600;border:0;border-radius:12px;padding:12px 18px;min-height:48px;cursor:pointer;background:var(--blue);color:#fff;margin:4px 6px 4px 0;touch-action:manipulation}
+.btn:active{transform:scale(.97)}
+.btn.sec{background:var(--soft);color:var(--blue)}
+.btn.green{background:var(--green)}
+.btn.orange{background:var(--orange)}
+.btn.red{background:var(--red)}
+.btn.small{padding:8px 12px;min-height:40px;font-size:16px}
+.btn:disabled{opacity:.45;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.lvl{background:#fff;border-radius:16px;padding:14px;cursor:pointer;border:3px solid transparent;box-shadow:0 2px 10px rgba(30,50,120,.08);text-align:left;font:inherit;color:inherit;min-height:130px}
+.lvl:hover,.lvl:focus{border-color:var(--blue)}
+.lvl .ic{font-size:34px}
+.lvl .nr{font-size:14px;color:#667;font-weight:600}
+.lvl .t{font-weight:700;font-size:18px;margin:2px 0}
+.lvl.done{background:#effaf3}
+.stars{color:#f5b301;font-size:22px;letter-spacing:2px}
+.stars .off{color:#d5d9e3}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+.steps span{padding:6px 10px;border-radius:20px;background:var(--soft);font-size:15px;font-weight:600;color:#556}
+.steps span.on{background:var(--blue);color:#fff}
+.steps span.ok{background:var(--green);color:#fff}
+.story{font-size:19px}
+.figure{background:#fbfcff;border:2px dashed #cdd6f0;border-radius:14px;padding:10px;text-align:center;overflow-x:auto}
+.figure svg{max-width:100%;height:auto}
+.slider{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.slider .val{font-size:22px;font-weight:700;min-width:120px;text-align:center}
+.round{width:52px;height:52px;border-radius:50%;font-size:28px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+input[type=range]{width:min(220px,40vw);height:36px}
+.counter{font-weight:700;color:var(--orange)}
+table.tab{border-collapse:collapse;width:100%;margin:8px 0}
+table.tab th,table.tab td{border:2px solid #d5ddf2;padding:6px;text-align:center}
+table.tab th{background:var(--soft)}
+table.tab input{width:100%;font:inherit;font-size:20px;padding:8px;border:2px solid #b9c6ea;border-radius:10px;text-align:center;min-height:46px}
+input.term{width:100%;font-size:26px;padding:12px;border:3px solid #b9c6ea;border-radius:12px;text-align:center;font-family:inherit}
+input.ok{border-color:var(--green)!important;background:#eafaf0}
+input.bad{border-color:var(--red)!important;background:#fff0f0}
+.msg{margin:8px 0;padding:10px 14px;border-radius:12px;font-size:18px}
+.msg.ok{background:#e3f7ea;color:#14663a}
+.msg.bad{background:#ffecec;color:#9b1c1c}
+.msg.info{background:#fff6dd;color:#7a5200}
+.msg:empty{display:none}
+.keypad{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;justify-content:center}
+.keypad .btn{min-width:56px;font-size:22px;margin:0}
+.preview{text-align:center;color:#556;min-height:26px;font-size:18px}
+.opts{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.opt{font:inherit;font-size:19px;padding:14px;border-radius:14px;border:3px solid #cdd6f0;background:#fff;cursor:pointer;text-align:left;min-height:56px;color:inherit}
+.opt.sel{border-color:var(--blue);background:#eef3ff}
+.opt.right{border-color:var(--green);background:#e3f7ea}
+.opt.wrong{border-color:var(--red);background:#ffecec}
+.termcard{font-size:24px;text-align:center;font-weight:600}
+.chg{color:#d6336c;font-weight:800;background:#ffe3ec;border-radius:6px;padding:0 4px}
+.method ol{margin:6px 0 0 0;padding-left:24px}
+.method li{margin:4px 0}
+.hidden{display:none!important}
+.stick{cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none}
+body{-webkit-tap-highlight-color:transparent}
+.stick .hit{stroke:transparent;stroke-width:22}
+.stick.counted .wood{stroke:#2f9e44}
+.newstick .wood{stroke-dasharray:100;stroke-dashoffset:100;animation:draw .55s ease-out forwards}
+.newstick .head{opacity:0;animation:pop .3s .45s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{to{opacity:1}}
+.bigstars{font-size:46px;text-align:center;color:#f5b301}
+.note{font-size:15px;color:#667}
+@media (max-width:600px){body{font-size:17px}header h1{font-size:19px}.btn{padding:10px 14px}}
+</style>
+</head>
+<body>
+<header><h1 id="title">🧮 Terme-Trainer</h1><div class="progress" title="Fortschritt"><div id="bar"></div></div><div class="score" id="score">⭐ 0</div></header>
+<main id="main"></main>
+<script>/* ===== Terme-Trainer: Parser & Checker (auch in Node testbar) ===== */
+var TermCore = (function () {
+  function normalize(s) {
+    s = String(s == null ? '' : s);
+    if (s.indexOf('=') >= 0) s = s.slice(s.lastIndexOf('=') + 1);   // "T = 3x+1" -> "3x+1"
+    s = s.replace(/[·•⋅×✕*]/g, '*').replace(/[÷:]/g, '/')
+         .replace(/[−–—]/g, '-').replace(/X/g, 'x').replace(/²/g, '^2')
+         .replace(/[\[{]/g, '(').replace(/[\]}]/g, ')');
+    s = s.replace(/(\d)\s*,\s*(\d)/g, '$1.$2');                      // Dezimalkomma
+    s = s.replace(/€|cm²|cm|m²/g, '');
+    return s.replace(/\s+/g, '');
+  }
+  function tokenize(s) {
+    var t = [], i = 0, m;
+    while (i < s.length) {
+      var c = s[i];
+      if ((m = /^(\d+\.?\d*|\.\d+)/.exec(s.slice(i)))) { t.push({ k: 'num', v: parseFloat(m[1]) }); i += m[1].length; continue; }
+      if (c === 'x') { t.push({ k: 'x' }); i++; continue; }
+      if ('+-*/^()'.indexOf(c) >= 0) { t.push({ k: c }); i++; continue; }
+      if (c === ',') throw new Error('Komma an einer seltsamen Stelle – schreibe Dezimalzahlen wie 0,5.');
+      if (/[a-wyzäöüß]/i.test(c)) throw new Error('Benutze bitte x als Variable (nicht „' + c + '“).');
+      throw new Error('Das Zeichen „' + c + '“ kenne ich nicht.');
+    }
+    // implizite Multiplikation: 2x, 2(…), x(…), )(…), )x, x2? (nicht erlaubt -> 2x)
+    var out = [];
+    for (var j = 0; j < t.length; j++) {
+      var a = out[out.length - 1], b = t[j];
+      if (a && (a.k === 'num' || a.k === 'x' || a.k === ')') && (b.k === 'x' || b.k === '(' || (b.k === 'num' && a.k !== 'num')))
+        out.push({ k: '*' });
+      out.push(b);
+    }
+    return out;
+  }
+  function parse(str) {
+    var s = normalize(str);
+    if (!s) throw new Error('Das Feld ist noch leer.');
+    var t = tokenize(s), p = 0;
+    function peek() { return t[p] ? t[p].k : null; }
+    function expr() {
+      var n = term();
+      while (peek() === '+' || peek() === '-') { var o = t[p++].k; n = { op: o, a: n, b: term() }; }
+      return n;
+    }
+    function term() {
+      var n = unary();
+      while (peek() === '*' || peek() === '/') { var o = t[p++].k; n = { op: o, a: n, b: unary() }; }
+      return n;
+    }
+    function unary() {
+      if (peek() === '-') { p++; return { op: 'neg', a: unary() }; }
+      if (peek() === '+') { p++; return unary(); }
+      return power();
+    }
+    function power() {
+      var n = atom();
+      if (peek() === '^') { p++; n = { op: '^', a: n, b: unary() }; }
+      return n;
+    }
+    function atom() {
+      var k = peek();
+      if (k === 'num') return { num: t[p++].v };
+      if (k === 'x') { p++; return { x: true }; }
+      if (k === '(') {
+        p++; var n = expr();
+        if (peek() !== ')') throw new Error('Da fehlt eine schließende Klammer „)“.');
+        p++; return n;
+      }
+      if (k === ')') throw new Error('Da ist eine Klammer „)“ zu viel oder an der falschen Stelle.');
+      if (k === null) throw new Error('Der Term hört mitten drin auf.');
+      throw new Error('Hier fehlt eine Zahl oder x (vor „' + (k === '*' ? '·' : k) + '“).');
+    }
+    var tree = expr();
+    if (p < t.length) throw new Error(t[p].k === ')' ? 'Da ist eine Klammer „)“ zu viel.' : 'Ich verstehe den Term nicht ganz – prüfe die Rechenzeichen.');
+    return tree;
+  }
+  function hasX(n) { return !!(n && (n.x || hasX(n.a) || hasX(n.b))); }
+  function evalTree(n, x) {
+    if ('num' in n) return n.num;
+    if (n.x) return x;
+    switch (n.op) {
+      case 'neg': return -evalTree(n.a, x);
+      case '+': return evalTree(n.a, x) + evalTree(n.b, x);
+      case '-': return evalTree(n.a, x) - evalTree(n.b, x);
+      case '*': return evalTree(n.a, x) * evalTree(n.b, x);
+      case '/': return evalTree(n.a, x) / evalTree(n.b, x);
+      case '^': return Math.pow(evalTree(n.a, x), evalTree(n.b, x));
+    }
+    throw new Error('?');
+  }
+  function evaluate(str, x) { return evalTree(parse(str), x); }
+  function same(a, b) { return isFinite(a) && isFinite(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)); }
+  function fmt(v) {
+    if (!isFinite(v)) return '–';
+    var r = Math.round(v * 1e6) / 1e6;
+    return String(r).replace('-', '−').replace('.', ',');
+  }
+  function pretty(str) {
+    return normalize(str).replace(/\*/g, ' · ').replace(/\//g, ' : ').replace(/\+/g, ' + ')
+      .replace(/(\S)-/g, '$1 − ').replace(/-/g, '−').replace(/\./g, ',').replace(/\s+/g, ' ').trim();
+  }
+  /* Prüft einen Term gegen eine Ziel-Funktion. xs: Testwerte. */
+  function check(str, target, xs) {
+    xs = xs || [1, 2, 3, 4, 5, 10, 100];
+    var tree;
+    try { tree = parse(str); } catch (e) { return { status: 'error', message: e.message }; }
+    var rows = xs.map(function (x) { var u = evalTree(tree, x), r = target(x); return { x: x, user: u, right: r, ok: same(u, r) }; });
+    var good = rows.filter(function (r) { return r.ok; }), bad = rows.filter(function (r) { return !r.ok; });
+    if (!bad.length) return { status: 'ok', rows: rows, message: 'Super, dein Term stimmt!' };
+    if (!hasX(tree)) return { status: 'nox', rows: rows, message: 'In deinem Term kommt kein x vor. Der Term soll für jede Anzahl funktionieren – ersetze die Zahl, die sich ändert, durch x.' };
+    var f = bad[0];
+    if (good.length) {
+      return { status: 'almost', rows: rows, message: 'Fast! Dein Term stimmt für x = ' + good.slice(0, 3).map(function (r) { return fmt(r.x); }).join(', ') +
+        ', aber nicht für x = ' + fmt(f.x) + ' (dein Term ergibt ' + fmt(f.user) + ', richtig wäre ' + fmt(f.right) + ').' };
+    }
+    return { status: 'wrong', rows: rows, message: 'Noch nicht. Für x = ' + fmt(f.x) + ' ergibt dein Term ' + fmt(f.user) + ', richtig wäre ' + fmt(f.right) + '. Schau nochmal in deine Tabelle.' };
+  }
+  /* Prüft eine Rechnung ohne x (Tabellenzelle) */
+  function checkNumber(str, expected) {
+    var tree;
+    try { tree = parse(str); } catch (e) { return { status: 'error', message: e.message }; }
+    if (hasX(tree)) return { status: 'error', message: 'Hier bitte mit echten Zahlen rechnen, noch ohne x.' };
+    var v = evalTree(tree, 0);
+    return same(v, expected) ? { status: 'ok', value: v } : { status: 'wrong', value: v, message: 'Das ergibt ' + fmt(v) + ' – zähle nochmal nach.' };
+  }
+  return { normalize: normalize, parse: parse, evaluate: evaluate, check: check, checkNumber: checkNumber, fmt: fmt, pretty: pretty, same: same, hasX: function (s) { try { return hasX(parse(s)); } catch (e) { return false; } } };
+})();
+if (typeof module !== 'undefined') module.exports = TermCore;
+</script>
+<script>/* ===== Terme-Trainer App ===== */
+(function () {
+  'use strict';
+  var T = TermCore, fmt = T.fmt;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  function h(html) { var d = document.createElement('div'); d.innerHTML = html; return d; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  /* ---------- Figuren (SVG) ---------- */
+  var L = 60, H = 52;
+  function stickSVG(s, isNew, idx) {
+    return '<g class="stick' + (isNew ? ' newstick' : '') + '" data-i="' + idx + '">' +
+      '<line class="hit" x1="' + s[0] + '" y1="' + s[1] + '" x2="' + s[2] + '" y2="' + s[3] + '"/>' +
+      '<line class="wood" pathLength="100" x1="' + s[0] + '" y1="' + s[1] + '" x2="' + s[2] + '" y2="' + s[3] + '" stroke="#9c6b30" stroke-width="7" stroke-linecap="round"/>' +
+      '<circle class="head" cx="' + s[2] + '" cy="' + s[3] + '" r="5.5" fill="#d9302c"/></g>';
+  }
+  function sticksTri(n) {
+    var P = function (i) { return [i * L / 2, i % 2 ? 10 : 10 + H]; }, out = [];
+    function seg(a, b) { return [a[0], a[1], b[0], b[1]]; }
+    for (var k = 1; k <= n; k++) {
+      var g = [];
+      if (k === 1) { g.push(seg(P(0), P(1)), seg(P(1), P(2))); }
+      else g.push(seg(P(k), P(k + 1)));
+      var y = (k % 2) ? 10 + H : 10;
+      g.push([(k - 1) * L / 2, y, (k + 1) * L / 2, y]);
+      out.push(g);
+    }
+    return out;
+  }
+  function sticksSq(n) {
+    var out = [], y0 = 10, y1 = 10 + L;
+    for (var k = 1; k <= n; k++) {
+      var a = (k - 1) * L, b = k * L, g = [];
+      if (k === 1) g.push([a, y1, a, y0]);
+      g.push([a, y1, b, y1], [a, y0, b, y0], [b, y1, b, y0]);
+      out.push(g);
+    }
+    return out;
+  }
+  function sticksHouse(n) {
+    var out = [], top = 45, y0 = top, y1 = top + L;
+    for (var k = 1; k <= n; k++) {
+      var a = (k - 1) * L, b = k * L, m = (a + b) / 2, g = [];
+      if (k === 1) g.push([a, y1, a, y0]);
+      g.push([a, y1, b, y1], [b, y1, b, y0], [a, y0, b, y0], [a, y0, m, y0 - 35], [b, y0, m, y0 - 35]);
+      out.push(g);
+    }
+    return out;
+  }
+  var stickFns = { tri: sticksTri, sq: sticksSq, house: sticksHouse };
+  function stickFigure(kind, n, prevN) {
+    var groups = stickFns[kind](n), parts = [], idx = 0, maxX = 0, maxY = 0;
+    groups.forEach(function (g, gi) {
+      g.forEach(function (s) {
+        parts.push(stickSVG(s, gi >= prevN, idx++));
+        maxX = Math.max(maxX, s[0], s[2]); maxY = Math.max(maxY, s[1], s[3]);
+      });
+    });
+    var w = maxX + 20, hh = maxY + 20;
+    return '<svg viewBox="-10 -5 ' + w + ' ' + hh + '" width="' + Math.min(900, w * 2) + '" role="img" aria-label="Figur">' + parts.join('') + '</svg>';
+  }
+  function snakeFigure(x) {
+    var p = [], cx = 14, r = 6;
+    function pearl(xx, yy, col) { p.push('<circle cx="' + xx + '" cy="' + yy + '" r="' + r + '" fill="' + col + '" stroke="#333" stroke-width=".6"/>'); }
+    for (var i = 0; i < 3; i++) { pearl(cx, 40, '#e8590c'); cx += 13; }
+    p.push('<circle cx="' + (14) + '" cy="37" r="1.6" fill="#fff"/>');
+    var labels = [];
+    for (var s = 0; s < x; s++) {
+      var start = cx + 4;
+      for (var j = 0; j < 10; j++) { pearl(start + j * 13, 33, s % 2 ? '#ffd43b' : '#94d82d'); pearl(start + j * 13, 47, s % 2 ? '#ffd43b' : '#94d82d'); }
+      labels.push('<text x="' + (start + 58) + '" y="72" font-size="12" text-anchor="middle" fill="#555">1 cm = 20</text>');
+      cx = start + 10 * 13;
+    }
+    cx += 4;
+    for (i = 0; i < 3; i++) { pearl(cx, 40, '#4dabf7'); cx += 13; }
+    var w = cx + 10;
+    return '<svg viewBox="0 0 ' + w + ' 80" width="' + Math.min(900, w * 1.3) + '">' +
+      '<text x="27" y="20" font-size="12" text-anchor="middle" fill="#c2410c">Kopf 3</text>' +
+      '<text x="' + (cx - 26) + '" y="20" font-size="12" text-anchor="middle" fill="#1971c2">Schwanz 3</text>' + p.join('') + labels.join('') + '</svg>';
+  }
+  function rectFigure(x, kind) {
+    var other = kind === 'plus3' ? x + 3 : 2 * x, s = 26;
+    var w = other * s, hh = x * s;
+    var lab = kind === 'plus3' ? 'x + 3 = ' + fmt(other) : '2 · x = ' + fmt(other);
+    return '<svg viewBox="-90 -10 ' + (w + 130) + ' ' + (hh + 60) + '" width="' + Math.min(820, (w + 130) * 1.15) + '">' +
+      '<rect x="0" y="0" width="' + w + '" height="' + hh + '" fill="#dbe4ff" stroke="#2b5fd9" stroke-width="3"/>' +
+      '<text x="' + w / 2 + '" y="' + (hh + 26) + '" font-size="17" text-anchor="middle">' + lab + ' cm</text>' +
+      '<text x="-8" y="' + (hh / 2 + 6) + '" font-size="17" text-anchor="end">x = ' + fmt(x) + ' cm</text></svg>';
+  }
+  function eggsFigure(n) {
+    var p = [], bw = 3 * 26 + 12;
+    for (var k = 0; k < n; k++) {
+      var ox = k * (bw + 12);
+      p.push('<rect x="' + ox + '" y="0" width="' + bw + '" height="64" rx="8" fill="#c9a26b" stroke="#7a5a2e" stroke-width="2"/>');
+      for (var i = 0; i < 6; i++) p.push('<ellipse cx="' + (ox + 19 + (i % 3) * 26) + '" cy="' + (18 + Math.floor(i / 3) * 28) + '" rx="10" ry="12" fill="#fffaf0" stroke="#aaa"/>');
+    }
+    var w = n * (bw + 12);
+    return '<svg viewBox="-5 -5 ' + (w + 5) + ' 75" width="' + Math.min(900, w * 1.1) + '">' + p.join('') + '</svg>';
+  }
+  function emojiFigure(n, e, extra) {
+    var s = ''; for (var i = 0; i < n; i++) s += e;
+    return '<div style="font-size:38px;line-height:1.3;word-break:break-all">' + s + (extra || '') + '</div>';
+  }
+
+  /* ---------- Level-Daten ---------- */
+  var LEVELS = [
+    { id: 'geld', icon: '💶', title: 'Taschengeld', type: 'build', story: 'Maya hat <b>x Euro</b> gespart. Oma schenkt ihr <b>5 Euro</b> dazu. Wie viel Geld hat Maya jetzt?',
+      varName: 'gespart (€)', resName: 'Geld jetzt (€)', ns: [10, 20, 35], f: function (x) { return x + 5; }, calc: function (n) { return '<span class="chg">' + n + '</span> + 5'; },
+      canon: 'x + 5', alts: ['5 + x'],
+      step2: { q: 'Welche Zahl ändert sich in deinen Rechnungen?', opts: ['Die 5', 'Der gesparte Betrag', 'Gar keine'], ok: 1, why: 'Die 5 € von Oma bleiben gleich. Nur das Ersparte ändert sich – das wird zu x.' },
+      hints: ['Schau in deine Tabelle: Was rechnest du jedes Mal?', 'Du rechnest immer „gespart + 5“.', 'Ersetze „gespart“ durch x: x + 5'] },
+    { id: 'eier', icon: '🥚', title: 'Eierpackungen', type: 'build', story: 'In einer Packung sind <b>6 Eier</b>. Wie viele Eier sind in <b>x Packungen</b>?', fig: 'eggs', figMax: 6, figLabel: 'Packungen',
+      varName: 'Packungen', resName: 'Eier', ns: [1, 2, 5], f: function (x) { return 6 * x; }, calc: function (n) { return '<span class="chg">' + n + '</span> · 6'; },
+      canon: '6 · x', alts: ['x · 6'],
+      step2: { q: 'Was ändert sich in den Rechnungen?', opts: ['Die Anzahl der Eier pro Packung', 'Die Anzahl der Packungen', 'Nichts'], ok: 1, why: 'In jeder Packung sind immer 6 Eier. Es ändert sich nur, wie viele Packungen es sind.' },
+      hints: ['Bei 2 Packungen: 6 + 6 = 2 · 6.', 'Du rechnest immer „Anzahl Packungen · 6“.', 'x · 6 (oder 6 · x)'] },
+    { id: 'kino', icon: '🍿', title: 'Kino', type: 'build', story: 'Der Eintritt kostet <b>8 € pro Person</b>. Die Gruppe kauft außerdem <b>eine</b> große Tüte Popcorn für <b>3 €</b> (zum Teilen). Was kostet der Kinobesuch für <b>x Personen</b>?', fig: 'kino', figMax: 8, figLabel: 'Personen',
+      varName: 'Personen', resName: 'Kosten (€)', ns: [1, 2, 4], f: function (x) { return 8 * x + 3; }, calc: function (n) { return '<span class="chg">' + n + '</span> · 8 + 3'; },
+      canon: '8 · x + 3', alts: ['3 + 8 · x'],
+      step2: { q: 'Was passiert mit den 3 € fürs Popcorn, wenn mehr Personen mitkommen?', opts: ['Sie werden auch mehr', 'Sie bleiben 3 €, weil es nur eine Tüte gibt', 'Sie fallen weg'], ok: 1, why: 'Genau! Nur die Eintrittskosten wachsen mit der Anzahl der Personen. Die 3 € kommen genau einmal dazu.' },
+      hints: ['Bei 2 Personen: 8 + 8 + 3.', 'Du rechnest immer „Personen · 8 + 3“.', '8 · x + 3'] },
+    { id: 'handy', icon: '📱', title: 'Handytarif', type: 'build', story: 'Ein Handytarif kostet <b>5 € Grundgebühr</b> im Monat. Dazu kostet jede Minute <b>0,09 €</b>. Was kostet der Monat bei <b>x Minuten</b>?',
+      varName: 'Minuten', resName: 'Kosten (€)', ns: [10, 20, 50], f: function (x) { return 5 + 0.09 * x; }, calc: function (n) { return '5 + <span class="chg">' + n + '</span> · 0,09'; },
+      canon: '5 + 0,09 · x', alts: ['0,09 · x + 5'],
+      step2: { q: 'Was ist die Grundgebühr?', opts: ['Ein Betrag, der jeden Monat gleich bleibt', 'Der Preis pro Minute', 'Die Anzahl der Minuten'], ok: 0, why: 'Richtig: Die 5 € zahlt man immer. Nur der Minutenanteil (Minuten · 0,09) ändert sich.' },
+      hints: ['Bei 10 Minuten: 5 + 10 · 0,09 = 5,90 €.', 'Du rechnest immer „5 + Minuten · 0,09“.', '5 + 0,09 · x'] },
+    { id: 'rectU', icon: '▭', title: 'Rechteck: Umfang', type: 'build', story: 'Ein Rechteck ist <b>x cm</b> breit. Die andere Seite ist <b>3 cm länger</b>. Stelle einen Term für den <b>Umfang</b> auf (alle vier Seiten zusammen).', fig: 'rect', rectKind: 'plus3', figMax: 8, figLabel: 'x',
+      varName: 'x (cm)', resName: 'Umfang (cm)', ns: [1, 2, 5], f: function (x) { return 2 * x + 2 * (x + 3); }, calc: function (n) { return '<span class="chg">' + n + '</span> + <span class="chg">' + (n + 3) + '</span> + <span class="chg">' + n + '</span> + <span class="chg">' + (n + 3) + '</span>'; },
+      canon: 'x + (x + 3) + x + (x + 3)', alts: ['2 · x + 2 · (x + 3)', '4 · x + 6'],
+      step2: { q: 'Wie lang ist die lange Seite, wenn die kurze Seite x cm lang ist?', opts: ['3 · x', 'x + 3', 'x'], ok: 1, why: '„3 cm länger“ heißt: plus 3. Also x + 3 – mit Klammer, wenn man damit weiterrechnet.' },
+      hints: ['Bei x = 2 sind die Seiten 2 cm und 5 cm lang: 2 + 5 + 2 + 5.', 'Die Seiten sind x, x + 3, x, x + 3.', 'x + (x + 3) + x + (x + 3)'] },
+    { id: 'rectA', icon: '⬛', title: 'Rechteck: Fläche', type: 'build', story: 'Bei einem Rechteck ist eine Seite <b>x cm</b> lang, die andere ist <b>doppelt so lang</b>. Stelle einen Term für den <b>Flächeninhalt</b> auf (Länge mal Breite).', fig: 'rect', rectKind: 'double', figMax: 6, figLabel: 'x',
+      varName: 'x (cm)', resName: 'Fläche (cm²)', ns: [1, 2, 3], f: function (x) { return x * 2 * x; }, calc: function (n) { return '<span class="chg">' + n + '</span> · <span class="chg">' + (2 * n) + '</span>'; },
+      canon: 'x · 2 · x', alts: ['x · (2 · x)'],
+      step2: { q: 'Wie lang ist die andere Seite?', opts: ['x + 2', '2 · x', 'x · x'], ok: 1, why: '„Doppelt so lang“ heißt mal 2: 2 · x.' },
+      hints: ['Bei x = 3 sind die Seiten 3 cm und 6 cm: Fläche 3 · 6.', 'Fläche = kurze Seite · lange Seite = x · (2 · x).', 'x · 2 · x'] },
+    { id: 'tri', icon: '🔺', title: 'Streichholz-Dreiecke', type: 'build', story: 'Aus Streichhölzern werden Dreiecke in einer Reihe gelegt. Wie viele Hölzer braucht man für <b>x Dreiecke</b>?', fig: 'tri', figMax: 10, figLabel: 'Dreiecke', pattern: true,
+      varName: 'Dreiecke', resName: 'Hölzer', ns: [1, 2, 3, 4], f: function (x) { return 3 + (x - 1) * 2; }, calc: function (n) { return n === 1 ? '3' : '3 + <span class="chg">' + (n - 1) + '</span> · 2'; },
+      canon: '3 + (x − 1) · 2', alts: ['2 · x + 1'],
+      step2: { q: 'Die rote Zahl in den Rechnungen ist …', opts: ['gleich der Anzahl der Dreiecke', 'um 1 kleiner als die Anzahl der Dreiecke', 'immer 2'], ok: 1, why: 'Bei 4 Dreiecken steht dort 3, bei 10 Dreiecken stünde dort 9. Also: x − 1.' },
+      hints: ['Das erste Dreieck braucht 3 Hölzer. Wie viele neue Hölzer braucht jedes weitere?', 'Jedes weitere Dreieck braucht 2 Hölzer. Bei x Dreiecken gibt es x − 1 „weitere“.', '3 + (x − 1) · 2'] },
+    { id: 'sq', icon: '🟫', title: 'Streichholz-Quadrate', type: 'build', story: 'Jetzt werden Quadrate in einer Reihe gelegt. Wie viele Hölzer braucht man für <b>x Quadrate</b>?', fig: 'sq', figMax: 10, figLabel: 'Quadrate', pattern: true,
+      varName: 'Quadrate', resName: 'Hölzer', ns: [1, 2, 3, 4], f: function (x) { return 4 + (x - 1) * 3; }, calc: function (n) { return n === 1 ? '4' : '4 + <span class="chg">' + (n - 1) + '</span> · 3'; },
+      canon: '4 + (x − 1) · 3', alts: ['3 · x + 1'],
+      step2: { q: 'Wie viele Hölzer kommen für jedes weitere Quadrat dazu?', opts: ['4', '3', '1'], ok: 1, why: 'Jedes neue Quadrat teilt sich eine Seite mit dem Nachbarn, braucht also nur 3 neue Hölzer.' },
+      hints: ['Das erste Quadrat braucht 4 Hölzer. Zähle mit dem Regler, wie viele dazukommen.', 'Jedes weitere Quadrat: 3 Hölzer. Es gibt x − 1 weitere Quadrate.', '4 + (x − 1) · 3'] },
+    { id: 'house', icon: '🏠', title: 'Streichholz-Häuser', type: 'build', story: 'Häuser aus Streichhölzern (Quadrat mit Dach) stehen nebeneinander. Wie viele Hölzer braucht man für <b>x Häuser</b>?', fig: 'house', figMax: 8, figLabel: 'Häuser', pattern: true,
+      varName: 'Häuser', resName: 'Hölzer', ns: [1, 2, 3, 4], f: function (x) { return 6 + (x - 1) * 5; }, calc: function (n) { return n === 1 ? '6' : '6 + <span class="chg">' + (n - 1) + '</span> · 5'; },
+      canon: '6 + (x − 1) · 5', alts: ['5 · x + 1'],
+      step2: { q: 'Wie viele Hölzer kommen für jedes weitere Haus dazu?', opts: ['6', '5', '4'], ok: 1, why: 'Ein Haus hat 6 Hölzer. Das nächste teilt sich eine Wand, braucht also 5 neue.' },
+      hints: ['Ein Haus: 4 Hölzer fürs Quadrat + 2 fürs Dach.', 'Jedes weitere Haus braucht 5 Hölzer; es gibt x − 1 weitere Häuser.', '6 + (x − 1) · 5'] },
+    { id: 'snake', icon: '🐍', title: 'Perlenschlange', type: 'build', story: 'Eine Perlenschlange hat <b>3 Perlen</b> für den Kopf, <b>3 Perlen</b> für den Schwanz und <b>20 Perlen</b> für jeden Zentimeter Körper. Wie viele Perlen braucht man für <b>x cm</b> Körperlänge?', fig: 'snake', figMax: 6, figLabel: 'cm Körper',
+      varName: 'Körper (cm)', resName: 'Perlen', ns: [1, 2, 5], f: function (x) { return 3 + 3 + x * 20; }, calc: function (n) { return '3 + 3 + <span class="chg">' + n + '</span> · 20'; },
+      canon: '3 + 3 + x · 20', alts: ['6 + 20 · x', '20 · x + 6'],
+      step2: { q: 'Was ändert sich, wenn die Schlange länger wird?', opts: ['Kopf und Schwanz werden größer', 'Nur die Perlen für den Körper werden mehr', 'Alles bleibt gleich'], ok: 1, why: 'Kopf (3) und Schwanz (3) bleiben gleich. Nur der Körper wächst: 20 Perlen pro cm.' },
+      hints: ['Bei 2 cm: 3 + 3 + 2 · 20.', 'Du rechnest immer „3 + 3 + Länge · 20“.', '3 + 3 + x · 20'] },
+    { id: 'match', icon: '🃏', title: 'Welcher Term passt?', type: 'match' },
+    { id: 'reverse', icon: '🔄', title: 'Was berechnet der Term?', type: 'reverse' }
+  ];
+
+  var MATCH = [
+    { story: 'Streichholz-Dreiecke: Wie viele Hölzer für x Dreiecke?', fig: 'tri', f: function (x) { return 2 * x + 1; },
+      cards: ['3 · 2 · x', '3 + (x − 1) · 2', '3 + (x + 1) · 2', '2 · x + 1'] },
+    { story: 'An einen Tisch passen 4 Personen. Schiebt man x Tische in einer Reihe zusammen, sitzt oben und unten an jedem Tisch eine Person und an jedem Ende eine. Wie viele Personen passen an x Tische?', fig: 'tables', f: function (x) { return 2 * x + 2; },
+      cards: ['4 · x', '2 · x + 2', '4 + (x − 1) · 2', 'x + 4'] },
+    { story: 'Kino: 8 € Eintritt pro Person und einmal 3 € Popcorn. Kosten für x Personen?', f: function (x) { return 8 * x + 3; },
+      cards: ['(8 + 3) · x', '8 · x + 3', '3 + x · 8', '11 · x'] },
+    { story: 'Streichholz-Quadrate in einer Reihe: Hölzer für x Quadrate?', fig: 'sq', f: function (x) { return 3 * x + 1; },
+      cards: ['4 · x', '4 + (x − 1) · 3', '3 · x + 1', 'x + 3'] }
+  ];
+  var REVERSE = [
+    { term: '4 · x + 12', story: 'Ein Fahrradverleih berechnet den Preis in € für x Stunden mit diesem Term. Was bedeutet die 12?',
+      opts: ['Der Preis pro Stunde', 'Ein fester Grundpreis, den man immer einmal zahlt', 'Die Anzahl der Stunden', 'Der Preis für 12 Stunden'], ok: 1,
+      why: 'Die 12 wird nicht mit x malgenommen – sie kommt immer genau einmal dazu. 4 · x sind 4 € für jede Stunde.' },
+    { term: '3 + 3 + x · 20', story: 'Dieser Term gehört zur Perlenschlange (x = Körperlänge in cm). Was berechnet x · 20?',
+      opts: ['Die Perlen für Kopf und Schwanz', 'Die Perlen für den Körper', 'Die Länge der Schlange', 'Die Perlen pro cm'], ok: 1,
+      why: 'Für jeden der x Zentimeter braucht man 20 Perlen – also x · 20 Perlen für den Körper. 3 + 3 sind Kopf und Schwanz.' },
+    { term: '2 · x + 2 · (x + 3)', story: 'Ein Rechteck hat die Seiten x cm und x + 3 cm. Was berechnet dieser Term?',
+      opts: ['Den Flächeninhalt', 'Den Umfang', 'Die Länge einer Seite', 'Die Diagonale'], ok: 1,
+      why: 'Zweimal die eine Seite plus zweimal die andere Seite – das sind alle vier Seiten, also der Umfang.' },
+    { term: '6 · x', story: 'Welche Situation passt zu diesem Term?',
+      opts: ['Maya hat x € und bekommt 6 € dazu', 'In x Packungen sind je 6 Eier – wie viele Eier sind es?', 'Ein Rechteck hat die Seiten x und 6 – wie groß ist der Umfang?', '6 Kinder teilen sich x Bonbons'], ok: 1,
+      why: '6 · x heißt: x-mal die 6. Bei „x € + 6 €“ wäre der Term x + 6, beim Teilen x : 6, und der Umfang wäre x + 6 + x + 6.' },
+    { term: '3 + (x − 1) · 2', story: 'Wofür steht in diesem Term (Streichholz-Dreiecke, x = Anzahl Dreiecke) das „x − 1“?',
+      opts: ['Für alle Dreiecke', 'Für alle Dreiecke außer dem ersten', 'Für die Hölzer des ersten Dreiecks', 'Für ein Dreieck, das weggenommen wird'], ok: 1,
+      why: 'Das erste Dreieck ist schon mit der 3 bezahlt. Die übrigen x − 1 Dreiecke brauchen je 2 Hölzer.' }
+  ];
+
+  /* ---------- Speicher ---------- */
+  var KEY = 'termeTrainer.v1', state;
+  function load() { try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { state = {}; } state.levels = state.levels || {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { } }
+  function setStars(id, s) { var o = state.levels[id] || {}; o.done = true; o.stars = Math.max(o.stars || 0, s); state.levels[id] = o; save(); updateHeader(); }
+  function totalStars() { var t = 0; for (var k in state.levels) t += state.levels[k].stars || 0; return t; }
+  function updateHeader() {
+    var done = LEVELS.filter(function (l) { return state.levels[l.id] && state.levels[l.id].done; }).length;
+    $('#score').textContent = '⭐ ' + totalStars() + ' / ' + LEVELS.length * 3;
+    $('#bar').style.width = (100 * done / LEVELS.length) + '%';
+    $('#bar').parentNode.title = done + ' von ' + LEVELS.length + ' Levels geschafft';
+  }
+  function starsHTML(n) { var s = ''; for (var i = 0; i < 3; i++) s += i < n ? '★' : '<span class="off">★</span>'; return '<span class="stars">' + s + '</span>'; }
+
+  /* ---------- Startseite ---------- */
+  function home() {
+    var m = $('#main');
+    var cards = LEVELS.map(function (l, i) {
+      var st = state.levels[l.id];
+      return '<button class="lvl' + (st && st.done ? ' done' : '') + '" data-go="' + i + '"><div class="ic">' + l.icon + '</div><div class="nr">Level ' + (i + 1) + '</div><div class="t">' + l.title + '</div>' + starsHTML(st ? st.stars : 0) + '</button>';
+    }).join('');
+    m.innerHTML = '<div class="card method"><h2>Hallo Maya! 👋</h2><p>Hier übst du, <b>Terme aufzustellen</b>. Das Geheimnis: Fang nicht mit x an, sondern mit echten Zahlen! So gehst du vor:</p>' +
+      '<ol><li><b>Mit Zahlen rechnen:</b> Rechne 3–4 Beispiele aus und schreibe die <i>Rechnung</i> auf.</li><li><b>Was ändert sich?</b> Finde die Zahl, die sich von Rechnung zu Rechnung ändert.</li>' +
+      '<li><b>Durch x ersetzen:</b> Schreibe x an die Stelle dieser Zahl.</li><li><b>Probe:</b> Setze eine Zahl für x ein und prüfe, ob es stimmt.</li></ol>' +
+      '<p class="note">Fang am besten bei Level 1 an. Für jedes Level gibt es bis zu 3 Sterne. Dein Fortschritt wird auf diesem Gerät gespeichert.</p></div>' +
+      '<div class="grid">' + cards + '</div>' +
+      '<div style="text-align:center;margin:24px 0"><button class="btn red small" id="reset">Fortschritt zurücksetzen</button></div>';
+    m.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { openLevel(+b.dataset.go); }; });
+    $('#reset').onclick = function () { if (confirm('Wirklich alle Sterne löschen und neu anfangen?')) { state = { levels: {} }; save(); updateHeader(); home(); } };
+    window.scrollTo(0, 0);
+  }
+  function openLevel(i) {
+    var l = LEVELS[i];
+    if (l.type === 'build') buildLevel(i); else if (l.type === 'match') matchLevel(i); else reverseLevel(i);
+    window.scrollTo(0, 0);
+  }
+  function levelHead(i, l) {
+    return '<div class="card"><button class="btn sec small" data-home>← Übersicht</button><h2>' + l.icon + ' Level ' + (i + 1) + ': ' + l.title + '</h2>';
+  }
+  function finishBox(i, stars, extra) {
+    var next = i + 1 < LEVELS.length;
+    return '<div class="card" style="text-align:center"><div class="bigstars">' + starsHTML(stars) + '</div><h2>Geschafft! ' + (stars === 3 ? 'Perfekt! 🎉' : stars === 2 ? 'Sehr gut! 👍' : 'Gut gemacht! 💪') + '</h2>' + (extra || '') +
+      (next ? '<button class="btn green" data-next>Nächstes Level →</button>' : '<p>Du hast alle Level geschafft! 🏆</p>') + '<button class="btn sec" data-home>Zur Übersicht</button></div>';
+  }
+  function wire(root, i) {
+    root.querySelectorAll('[data-home]').forEach(function (b) { b.onclick = home; });
+    root.querySelectorAll('[data-next]').forEach(function (b) { b.onclick = function () { openLevel(i + 1); }; });
+  }
+
+  /* ---------- Figur mit Regler ---------- */
+  function figureHTML(l, n, prev) {
+    switch (l.fig) {
+      case 'tri': case 'sq': case 'house': return stickFigure(l.fig, n, prev);
+      case 'snake': return snakeFigure(n);
+      case 'rect': return rectFigure(n, l.rectKind);
+      case 'eggs': return eggsFigure(n);
+      case 'kino': return emojiFigure(n, '🧑', ' + 🍿');
+      case 'tables': return tablesFigure(n);
+    }
+    return '';
+  }
+  function tablesFigure(n) {
+    var p = [], s = 50;
+    for (var k = 0; k < n; k++) {
+      p.push('<rect x="' + (30 + k * s) + '" y="30" width="' + s + '" height="' + s + '" fill="#e9d8b8" stroke="#7a5a2e" stroke-width="2"/>');
+      p.push('<circle cx="' + (55 + k * s) + '" cy="15" r="9" fill="#4c6ef5"/><circle cx="' + (55 + k * s) + '" cy="95" r="9" fill="#4c6ef5"/>');
+    }
+    p.push('<circle cx="15" cy="55" r="9" fill="#4c6ef5"/><circle cx="' + (45 + n * s) + '" cy="55" r="9" fill="#4c6ef5"/>');
+    var w = 60 + n * s;
+    return '<svg viewBox="0 0 ' + w + ' 110" width="' + Math.min(700, w * 1.2) + '">' + p.join('') + '</svg>';
+  }
+  function mountFigure(box, l, startN) {
+    var n = startN || 1, prev = 0, counted = {};
+    box.innerHTML = '<div class="figure"><div class="fig"></div>' +
+      '<div class="slider"><button class="btn round sec" data-m>−</button><input type="range" min="1" max="' + (l.figMax || 8) + '" value="' + n + '" aria-label="Anzahl"><button class="btn round sec" data-p>+</button>' +
+      '<div class="val"></div></div>' + (l.pattern ? '<div class="note">Tipp: Tippe die Hölzer an, um sie zu zählen. Gezählt: <span class="counter">0</span></div>' : '') + '</div>';
+    var fig = box.querySelector('.fig'), rng = box.querySelector('input'), val = box.querySelector('.val');
+    function draw() {
+      fig.innerHTML = figureHTML(l, n, prev); counted = {};
+      val.textContent = (l.fig === 'rect' ? 'x = ' + n : n + ' ' + (l.figLabel || ''));
+      rng.value = n; prev = n;
+      var c = box.querySelector('.counter'); if (c) c.textContent = '0';
+      fig.querySelectorAll('.stick').forEach(function (g) {
+        g.addEventListener('click', function () {
+          g.classList.toggle('counted');
+          var k = fig.querySelectorAll('.stick.counted').length;
+          var c2 = box.querySelector('.counter'); if (c2) c2.textContent = k;
+        });
+      });
+    }
+    box.querySelector('[data-m]').onclick = function () { if (n > 1) { prev = n - 1; n--; prev = n; draw(); } };
+    box.querySelector('[data-p]').onclick = function () { if (n < (l.figMax || 8)) { prev = n; n++; draw(); } };
+    rng.oninput = function () { var v = +rng.value; prev = Math.min(prev, v); n = v; draw(); };
+    prev = 0; draw();
+  }
+
+  /* ---------- Bau-Level (4 Schritte) ---------- */
+  function buildLevel(i) {
+    var l = LEVELS[i], m = $('#main'), hintsUsed = 0, wrong = 0;
+    m.innerHTML = levelHead(i, l) +
+      '<div class="steps"><span id="s1" class="on">1 Mit Zahlen rechnen</span><span id="s2">2 Was ändert sich?</span><span id="s3">3 Durch x ersetzen</span><span id="s4">4 Probe</span></div>' +
+      '<p class="story">' + l.story + '</p>' + (l.fig ? '<div id="figbox"></div>' : '') + '</div>' +
+      // Schritt 1
+      '<div class="card" id="c1"><h3>Schritt 1: Mit echten Zahlen rechnen</h3><p>Schreibe die <b>Rechnung</b> auf' + (i < 3 ? ' (z. B. <i>' + l.calc(l.ns[0]).replace(/<[^>]+>/g, '') + '</i>)' : '') + ' und das <b>Ergebnis</b>. ' + (l.fig ? 'Benutze den Regler oben, um nachzuzählen!' : '') + '</p>' +
+      '<table class="tab"><tr><th>' + l.varName + '</th><th>Rechnung</th><th>' + l.resName + '</th></tr>' +
+      l.ns.map(function (n, r) { return '<tr><td><b>' + fmt(n) + '</b></td><td><input data-r="' + r + '" data-c="calc" inputmode="text" autocomplete="off" placeholder="Rechnung"></td><td><input data-r="' + r + '" data-c="res" inputmode="decimal" autocomplete="off" placeholder="?"></td></tr>'; }).join('') +
+      '</table><button class="btn" id="chk1">Tabelle prüfen</button><div class="msg" id="m1"></div></div>' +
+      // Schritt 2
+      '<div class="card hidden" id="c2"><h3>Schritt 2: Was ändert sich?</h3><p>So sehen die Rechnungen aus. Die <span class="chg">rote Zahl</span> ändert sich:</p><div id="pattern" style="font-size:20px;margin:6px 0 12px"></div>' +
+      '<p><b>' + l.step2.q + '</b></p><div class="opts" id="o2">' + l.step2.opts.map(function (o, k) { return '<button class="opt" data-k="' + k + '">' + o + '</button>'; }).join('') + '</div><div class="msg" id="m2"></div></div>' +
+      // Schritt 3
+      '<div class="card hidden" id="c3"><h3>Schritt 3: Ersetze die Zahl, die sich ändert, durch x</h3><p>Schreibe deinen Term mit <b>x</b>. Du kannst <b>·</b> oder <b>*</b> schreiben, 2x für 2 · x, und Dezimalzahlen mit Komma.</p>' +
+      '<input class="term" id="term" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Term mit x, z. B. 3 + (x − 1) · 2">' +
+      '<div class="preview" id="prev"></div>' +
+      '<div class="keypad">' + ['x', '·', '+', '−', '(', ')', ',', ':'].map(function (k) { return '<button class="btn sec" data-key="' + k + '">' + k + '</button>'; }).join('') + '<button class="btn sec" data-key="⌫">⌫</button></div>' +
+      '<button class="btn green" id="chk3">Term prüfen</button><button class="btn orange" id="hint">💡 Tipp (3 übrig)</button><div class="msg" id="m3"></div><div id="hintlist"></div></div>' +
+      // Schritt 4
+      '<div class="card hidden" id="c4"><h3>Schritt 4: Probe</h3><div id="probe"></div></div><div id="fin"></div>';
+    wire(m, i);
+    if (l.fig) mountFigure($('#figbox'), l, 1);
+    function mark(id, cls) { var e = $('#' + id); e.className = cls; }
+    // Schritt 1
+    $('#chk1').onclick = function () {
+      var allOk = true, msgs = [];
+      l.ns.forEach(function (n, r) {
+        var exp = l.f(n), ci = $('input[data-r="' + r + '"][data-c="calc"]'), ri = $('input[data-r="' + r + '"][data-c="res"]');
+        ci.classList.remove('ok', 'bad'); ri.classList.remove('ok', 'bad');
+        if (ci.value.trim()) {
+          var c = T.checkNumber(ci.value, exp);
+          ci.classList.add(c.status === 'ok' ? 'ok' : 'bad');
+          if (c.status !== 'ok') { allOk = false; msgs.push('Zeile ' + fmt(n) + ', Rechnung: ' + c.message); }
+        }
+        var rr = ri.value.trim() ? T.checkNumber(ri.value, exp) : { status: 'empty' };
+        if (rr.status === 'ok') ri.classList.add('ok');
+        else { allOk = false; ri.classList.add('bad'); msgs.push('Zeile ' + fmt(n) + ', Ergebnis: ' + (rr.status === 'empty' ? 'noch leer.' : rr.message)); }
+      });
+      if (allOk) {
+        var noCalc = l.ns.some(function (n, r) { return !$('input[data-r="' + r + '"][data-c="calc"]').value.trim(); });
+        $('#m1').className = 'msg ok'; $('#m1').innerHTML = 'Alles richtig! 🎉' + (noCalc ? ' <span class="note">(Tipp: Schreib beim nächsten Mal auch die Rechnung auf – genau daraus entsteht der Term.)</span>' : '');
+        mark('s1', 'ok'); mark('s2', 'on');
+        $('#pattern').innerHTML = l.ns.map(function (n) { return '<div>' + l.varName.replace(/ \(.*\)/, '') + ' = <b>' + fmt(n) + '</b>: &nbsp; ' + l.calc(n) + ' = ' + fmt(l.f(n)) + '</div>'; }).join('');
+        $('#c2').classList.remove('hidden'); $('#c2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else { $('#m1').className = 'msg bad'; $('#m1').innerHTML = msgs.map(esc).join('<br>'); }
+    };
+    // Schritt 2
+    $('#o2').querySelectorAll('.opt').forEach(function (b) {
+      b.onclick = function () {
+        var k = +b.dataset.k;
+        if (k === l.step2.ok) {
+          b.classList.add('right'); $('#m2').className = 'msg ok'; $('#m2').textContent = '✔ ' + l.step2.why;
+          mark('s2', 'ok'); mark('s3', 'on'); $('#c3').classList.remove('hidden'); setTimeout(function () { $('#c3').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+        } else { b.classList.add('wrong'); $('#m2').className = 'msg bad'; $('#m2').textContent = 'Nicht ganz – schau dir die Rechnungen oben noch einmal an.'; }
+      };
+    });
+    // Schritt 3
+    var inp = $('#term');
+    function preview() {
+      var v = inp.value; if (!v.trim()) { $('#prev').textContent = ''; return; }
+      try { T.parse(v); $('#prev').textContent = 'Ich lese: ' + T.pretty(v); } catch (e) { $('#prev').textContent = '…'; }
+    }
+    inp.addEventListener('input', preview);
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#chk3').click(); });
+    m.querySelectorAll('[data-key]').forEach(function (b) {
+      b.onclick = function () {
+        var k = b.dataset.key, s = inp.selectionStart != null ? inp.selectionStart : inp.value.length, e2 = inp.selectionEnd != null ? inp.selectionEnd : s;
+        if (k === '⌫') { if (s === e2 && s > 0) s--; inp.value = inp.value.slice(0, s) + inp.value.slice(e2); }
+        else { var ins = (k === '·' || k === '+' || k === '−' || k === ':') ? ' ' + k + ' ' : k; inp.value = inp.value.slice(0, s) + ins + inp.value.slice(e2); s += ins.length; }
+        inp.focus(); inp.setSelectionRange(s, s); preview();
+      };
+    });
+    $('#hint').onclick = function () {
+      if (hintsUsed >= 3) return;
+      hintsUsed++;
+      $('#hintlist').innerHTML += '<div class="msg info">💡 Tipp ' + hintsUsed + ': ' + l.hints[hintsUsed - 1] + '</div>';
+      $('#hint').textContent = '💡 Tipp (' + (3 - hintsUsed) + ' übrig)'; if (hintsUsed >= 3) $('#hint').disabled = true;
+    };
+    var solved = false;
+    $('#chk3').onclick = function () {
+      if (solved) return;
+      var r = T.check(inp.value, l.f);
+      inp.classList.remove('ok', 'bad');
+      if (r.status === 'ok') {
+        solved = true; inp.classList.add('ok'); $('#m3').className = 'msg ok'; $('#m3').textContent = '✔ ' + r.message;
+        mark('s3', 'ok'); mark('s4', 'ok'); showProbe(inp.value);
+      } else {
+        if (r.status !== 'error') wrong++;
+        inp.classList.add('bad'); $('#m3').className = r.status === 'error' ? 'msg info' : 'msg bad'; $('#m3').textContent = r.message;
+      }
+    };
+    function showProbe(userTerm) {
+      var rows = [10, 100].map(function (x) {
+        return '<tr><td><b>x = ' + x + '</b></td><td>' + esc(T.pretty(userTerm).replace(/x/g, '<X>')).replace(/&lt;X&gt;/g, '<b>' + x + '</b>') + '</td><td><b>' + fmt(T.evaluate(userTerm, x)) + '</b></td></tr>';
+      }).join('');
+      var others = [l.canon].concat(l.alts).filter(function (t) { return T.normalize(t) !== T.normalize(userTerm); });
+      $('#probe').innerHTML = '<p>Wir setzen für x große Zahlen in <b>deinen</b> Term ein:</p><table class="tab"><tr><th>x</th><th>Einsetzen</th><th>' + l.resName + '</th></tr>' + rows + '</table>' +
+        (l.fig && l.figMax >= 10 ? '<p>Stell den Regler oben auf <b>10</b> und zähle nach – es müssen ' + fmt(l.f(10)) + ' sein! ✔</p>' : '') +
+        '<div class="msg ok">Auch richtig wären zum Beispiel: <b>' + others.join('</b> &nbsp;oder&nbsp; <b>') + '</b>. Verschiedene Terme können dasselbe berechnen – wichtig ist, dass für jede Zahl dasselbe herauskommt.</div>';
+      $('#c4').classList.remove('hidden');
+      var stars = 3 - (hintsUsed > 0 ? 1 : 0) - (wrong >= 2 || hintsUsed >= 3 ? 1 : 0); stars = Math.max(1, stars);
+      setStars(l.id, stars);
+      $('#fin').innerHTML = finishBox(i, stars, '<p class="note">' + (hintsUsed ? 'Tipps benutzt: ' + hintsUsed + '. ' : '') + (wrong ? 'Fehlversuche: ' + wrong + '.' : 'Ohne Fehlversuch!') + '</p>');
+      wire($('#fin'), i);
+      setTimeout(function () { $('#c4').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
+    }
+  }
+
+  /* ---------- Welcher Term passt? ---------- */
+  function matchLevel(i) {
+    var l = LEVELS[i], m = $('#main'), q = 0, firstTry = 0, tried = false;
+    m.innerHTML = levelHead(i, l) + '<p class="story">Tippe <b>alle</b> Terme an, die passen – manchmal sind es mehrere! Prüfe mit mehreren Zahlen.</p><div id="qnr" class="note"></div></div><div id="qbox"></div><div id="fin"></div>';
+    wire(m, i);
+    function show() {
+      var Q = MATCH[q], sel = {};
+      tried = false;
+      $('#qnr').textContent = 'Aufgabe ' + (q + 1) + ' von ' + MATCH.length;
+      $('#qbox').innerHTML = '<div class="card"><p class="story">' + Q.story + '</p>' + (Q.fig ? '<div class="figure">' + figureHTML({ fig: Q.fig }, 3, 3) + '</div>' : '') +
+        '<div class="opts" style="margin-top:12px">' + Q.cards.map(function (c, k) { return '<button class="opt termcard" data-k="' + k + '">' + c + '</button>'; }).join('') + '</div>' +
+        '<button class="btn green" id="mchk">Prüfen</button><div class="msg" id="mm"></div><div id="mtab"></div></div>';
+      $('#qbox').querySelectorAll('.opt').forEach(function (b) { b.onclick = function () { b.classList.toggle('sel'); sel[b.dataset.k] = b.classList.contains('sel'); }; });
+      $('#mchk').onclick = function () {
+        var correct = Q.cards.map(function (c) { return T.check(c, Q.f).status === 'ok'; });
+        var allRight = correct.every(function (c, k) { return c === !!sel[k]; });
+        if (!tried && allRight) firstTry++;
+        tried = true;
+        if (allRight) {
+          $('#qbox').querySelectorAll('.opt').forEach(function (b, k) { b.classList.remove('sel'); if (correct[k]) b.classList.add('right'); b.onclick = null; });
+          $('#mm').className = 'msg ok'; $('#mm').textContent = '✔ Richtig! Es passen: ' + Q.cards.filter(function (c, k) { return correct[k]; }).join('  und  ');
+          var xs = [1, 2, 3];
+          $('#mtab').innerHTML = '<table class="tab"><tr><th>Term</th>' + xs.map(function (x) { return '<th>x = ' + x + '</th>'; }).join('') + '</tr><tr><td><b>richtig</b></td>' + xs.map(function (x) { return '<td><b>' + fmt(Q.f(x)) + '</b></td>'; }).join('') + '</tr>' +
+            Q.cards.map(function (c, k) { return '<tr><td>' + c + (correct[k] ? ' ✔' : ' ✘') + '</td>' + xs.map(function (x) { var v = T.evaluate(c, x); return '<td style="color:' + (T.same(v, Q.f(x)) ? '#1f9d55' : '#d64545') + '">' + fmt(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>' +
+            '<button class="btn" id="mnext">' + (q + 1 < MATCH.length ? 'Nächste Aufgabe →' : 'Fertig') + '</button>';
+          $('#mnext').onclick = function () { q++; if (q < MATCH.length) show(); else done(); };
+        } else {
+          var nSel = Object.keys(sel).filter(function (k) { return sel[k]; }).length;
+          $('#mm').className = 'msg bad';
+          $('#mm').textContent = nSel === 0 ? 'Wähle mindestens einen Term aus.' : 'Noch nicht ganz. Tipp: Setze x = 1, 2 und 3 in jeden Term ein und vergleiche mit der Wirklichkeit' + (Q.fig ? ' (zähle im Bild).' : '.');
+        }
+      };
+    }
+    function done() {
+      var stars = firstTry === MATCH.length ? 3 : firstTry >= MATCH.length - 1 ? 2 : 1;
+      setStars(l.id, stars); $('#qbox').innerHTML = '';
+      $('#fin').innerHTML = finishBox(i, stars, '<p>Beim ersten Versuch richtig: ' + firstTry + ' von ' + MATCH.length + '</p>'); wire($('#fin'), i);
+    }
+    show();
+  }
+
+  /* ---------- Rückwärts ---------- */
+  function reverseLevel(i) {
+    var l = LEVELS[i], m = $('#main'), q = 0, firstTry = 0;
+    m.innerHTML = levelHead(i, l) + '<p class="story">Jetzt andersherum: Der Term ist gegeben. Was bedeutet er?</p><div id="qnr" class="note"></div></div><div id="qbox"></div><div id="fin"></div>';
+    wire(m, i);
+    function show() {
+      var Q = REVERSE[q], tried = false, solved = false;
+      $('#qnr').textContent = 'Aufgabe ' + (q + 1) + ' von ' + REVERSE.length;
+      $('#qbox').innerHTML = '<div class="card"><div class="termcard" style="font-size:32px;margin:6px 0 10px">' + Q.term + '</div><p class="story">' + Q.story + '</p><div class="opts">' +
+        Q.opts.map(function (o, k) { return '<button class="opt" data-k="' + k + '">' + o + '</button>'; }).join('') + '</div><div class="msg" id="rm"></div><div id="rn"></div></div>';
+      $('#qbox').querySelectorAll('.opt').forEach(function (b) {
+        b.onclick = function () {
+          if (solved) return;
+          var k = +b.dataset.k;
+          if (k === Q.ok) {
+            solved = true; if (!tried) firstTry++;
+            b.classList.add('right'); $('#rm').className = 'msg ok'; $('#rm').textContent = '✔ ' + Q.why;
+            $('#rn').innerHTML = '<button class="btn" id="rnext">' + (q + 1 < REVERSE.length ? 'Nächste Aufgabe →' : 'Fertig') + '</button>';
+            $('#rnext').onclick = function () { q++; if (q < REVERSE.length) show(); else done(); };
+          } else { tried = true; b.classList.add('wrong'); $('#rm').className = 'msg bad'; $('#rm').textContent = 'Leider nicht. Überlege: Welcher Teil des Terms wächst mit x, welcher bleibt gleich?'; }
+        };
+      });
+    }
+    function done() {
+      var stars = firstTry === REVERSE.length ? 3 : firstTry >= REVERSE.length - 1 ? 2 : 1;
+      setStars(l.id, stars); $('#qbox').innerHTML = '';
+      $('#fin').innerHTML = finishBox(i, stars, '<p>Beim ersten Versuch richtig: ' + firstTry + ' von ' + REVERSE.length + '</p>'); wire($('#fin'), i);
+    }
+    show();
+  }
+
+  /* ---------- Start ---------- */
+  window.TermTrainer = { LEVELS: LEVELS, MATCH: MATCH, REVERSE: REVERSE, openLevel: openLevel, home: home };
+  document.addEventListener('DOMContentLoaded', function () {
+    load(); updateHeader(); home();
+    $('#title').onclick = home;
+  });
+})();
+</script>
+</body>
+</html>
