@@ -25,7 +25,7 @@ A cute, gamified practice page for **order of operations with fractions** (Punkt
 
 ## Französisch
 
-Der Bilan zu Nizza (Parler, Vokabeln, direktes und indirektes Objekt, Adjektive, *voir*) ist ein eigener Test. Jeder Lösungssatz wird auf Französisch vorgesprochen. Mit Mikrofon vergleicht die Seite das Nachsprechen mit der Lösung, speichert aber keine Aufnahme.
+Die Seite ist das Bilan aus dem Buch, Aufgabe für Aufgabe: Parler, Vokabeln, Sätze mit *au*/*aux*, der Lesetext, das Adjektiv und *voir*. Jeder Lösungssatz wird auf Französisch vorgesprochen. Mit Mikrofon vergleicht die Seite das Nachsprechen mit der Lösung und speichert keine Aufnahme.
 
 ## Stack
 
