@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Maya · Französisch</title>
-  <meta name="description" content="Interaktiver Französisch-Test zum Bilan Nice: hören, antworten und nachsprechen." />
+  <title>Maya · Französisch Bilan</title>
+  <meta name="description" content="Das Bilan zu Nizza zum Ausfüllen: Parler, Vokabeln, Satzbau, Lesetext, Adjektive und voir, mit Aussprache." />
   <meta name="theme-color" content="#7ec8e8" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,7 +25,7 @@
       <span class="logo" aria-hidden="true"></span>
       <div>
         <p class="brand-name">Maya</p>
-        <p class="brand-tag">Französisch · Nice</p>
+        <p class="brand-tag">Französisch · Bilan</p>
       </div>
     </a>
     <div class="stats" aria-live="polite">
@@ -34,102 +34,18 @@
         <strong id="starCount">0</strong>
       </div>
       <div class="stat hit-stat">
-        <span class="stat-label">Treffer</span>
-        <strong id="hitCount">0</strong>/<span id="hitTotal">0</span>
+        <span class="stat-label">Richtig</span>
+        <strong id="hitCount">0</strong>/<span id="hitTotal">41</span>
       </div>
       <button type="button" class="sound-toggle" id="btnSound" aria-pressed="true">Sound an</button>
     </div>
   </header>
 
   <main>
-    <section id="screen-home" class="screen active">
-      <div class="hero">
-        <div class="buddy">
-          <div class="mascot" aria-hidden="true">
-            <div class="fox" id="homeFox">
-              <div class="ear left"></div>
-              <div class="ear right"></div>
-              <div class="face">
-                <div class="eye left"></div>
-                <div class="eye right"></div>
-                <div class="nose"></div>
-                <div class="cheek left"></div>
-                <div class="cheek right"></div>
-              </div>
-            </div>
-          </div>
-          <p class="speech" id="homeSpeech">Salut Maya! Wir üben die Sätze aus Nizza — erst hören, dann sprechen.</p>
-        </div>
-        <h1>Salut, Maya!</h1>
-        <p class="lede">
-          Bilan zu <em>Nice</em>: Parler, Lücken, Satzbau, Adjektive und <em>voir</em>.
-          Jeder Satz hat eine Stimme, und du sprichst nach.
-        </p>
-        <div class="cta-row">
-          <button type="button" class="btn primary" id="btnTest">Test starten</button>
-          <button type="button" class="btn ghost" id="btnHow">So geht’s</button>
-          <button type="button" class="btn ghost" id="btnDemo">Hörprobe</button>
-          <a class="btn ghost" href="index.html">Zum Termen-Pfad</a>
-        </div>
-        <p class="voice-note" id="voiceNote">Die französische Stimme kommt von deinem Gerät. Das Mikrofon speichert nichts.</p>
-      </div>
-
-      <section class="levels" aria-label="Stationen">
-        <h2>Stationen</h2>
-        <p class="levels-sub">Tipp eine Station — oder starte den ganzen Test.</p>
-        <div class="station-grid" id="stationGrid"></div>
-      </section>
-    </section>
-
-    <section id="screen-how" class="screen">
-      <button type="button" class="back" id="btnBackHow">← Zurück</button>
-      <h2>So übst du</h2>
-      <ol class="rules">
-        <li><strong>Lautsprecher</strong> spielt den Satz auf Französisch. <strong>Langsam</strong> spricht ihn noch einmal deutlicher.</li>
-        <li><strong>Mikrofon</strong>: sprich den Satz nach. Das Gerät vergleicht ihn mit der Lösung und speichert keine Aufnahme.</li>
-        <li>Satzbau: Subjekt, Verb, direktes Objekt, dann indirektes. <strong>à + le → au</strong>, <strong>à + les → aux</strong>.</li>
-        <li>Adjektive stehen meist nach dem Nomen. Davor: joli, petit, grand, bon, mauvais.</li>
-        <li><em>voir</em>: je vois, tu vois, il voit, nous voyons, vous voyez, ils voient.</li>
-      </ol>
-      <div class="example">
-        <p class="example-label">Satz aus dem Buch</p>
-        <p class="fr-say" lang="fr">Aujourd'hui, Lola montre la ville à son amie.</p>
-        <p class="note">la ville = direktes Objekt · à son amie = indirektes Objekt</p>
-      </div>
-      <button type="button" class="btn primary" id="btnStartFromHow">Test starten</button>
-    </section>
-
-    <section id="screen-play" class="screen">
-      <div class="play-top">
-        <button type="button" class="back" id="btnQuit">← Menü</button>
-        <div class="progress-wrap">
-          <div class="progress" id="progressBar"></div>
-        </div>
-        <span class="progress-text"><span id="qNum">1</span>/<span id="qTotal">10</span></span>
-      </div>
-      <div class="buddy play-buddy">
-        <div class="mascot tiny" aria-hidden="true">
-          <div class="fox" id="playFox">
-            <div class="ear left"></div>
-            <div class="ear right"></div>
-            <div class="face">
-              <div class="eye left"></div>
-              <div class="eye right"></div>
-              <div class="nose"></div>
-              <div class="cheek left"></div>
-              <div class="cheek right"></div>
-            </div>
-          </div>
-        </div>
-        <p class="speech" id="playSpeech"></p>
-      </div>
-      <div id="playCard"></div>
-    </section>
-
-    <section id="screen-done" class="screen">
+    <div class="hero">
       <div class="buddy">
         <div class="mascot" aria-hidden="true">
-          <div class="fox" id="doneFox">
+          <div class="fox" id="homeFox">
             <div class="ear left"></div>
             <div class="ear right"></div>
             <div class="face">
@@ -141,21 +57,25 @@
             </div>
           </div>
         </div>
-        <p class="speech" id="doneSpeech">Bravo, Maya!</p>
+        <p class="speech" id="homeSpeech">Überprüft, was ihr könnt. Ich lese jeden Satz vor.</p>
       </div>
-      <h1 id="doneTitle">Geschafft!</h1>
-      <p class="lede" id="doneLede"></p>
-      <p class="gekuerzt-pill" id="doneScore"></p>
-      <div id="doneMiss" class="miss-list"></div>
-      <div class="cta-row">
-        <button type="button" class="btn primary" id="btnAgain">Nochmal</button>
-        <button type="button" class="btn ghost" id="btnMenu">Menü</button>
-      </div>
-    </section>
+      <h1>Bilan 6 · Nice</h1>
+      <p class="lede">Dieselben Aufgaben wie im Buch. Ergänze auf Französisch, dann hör zu und sprich nach.</p>
+    </div>
+    <nav class="jumps" aria-label="Aufgaben">
+      <a href="#sec-parler">1 Parler</a>
+      <a href="#sec-vocab">2 Vokabeln</a>
+      <a href="#sec-ordre">3 Sätze</a>
+      <a href="#sec-lire">4 Text</a>
+      <a href="#sec-obj">19 Objekte</a>
+      <a href="#sec-adj">20 Adjektive</a>
+      <a href="#sec-voir">21 voir</a>
+    </nav>
+    <div class="sheet" id="sheet"></div>
   </main>
 
   <footer class="foot">
-    <p>Hören, tippen, nachsprechen. Das Mikrofon bleibt auf diesem Gerät.</p>
+    <p>Die französische Stimme kommt vom Gerät. Das Mikrofon speichert nichts.</p>
     <p class="more"><a href="index.html">Zurück zu Maya · Termen-Abenteuer</a></p>
   </footer>
 
